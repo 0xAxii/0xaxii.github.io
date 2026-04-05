@@ -37,11 +37,6 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Home,
 		LinkPreset.Archive,
 		LinkPreset.About,
-		{
-			name: "GitHub",
-			url: "https://github.com/0xAxii",
-			external: true,
-		},
 	],
 };
 
@@ -54,6 +49,16 @@ export const profileConfig: ProfileConfig = {
 			name: "GitHub",
 			icon: "fa6-brands:github",
 			url: "https://github.com/0xAxii",
+		},
+		{
+			name: "Discord",
+			icon: "fa6-brands:discord",
+			url: "https://www.discord.com/users/495238318699839498",
+		},
+		{
+			name: "X",
+			icon: "fa6-brands:x-twitter",
+			url: "https://x.com/axii7777",
 		},
 	],
 };
