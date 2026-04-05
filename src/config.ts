@@ -12,7 +12,7 @@ export const siteConfig: SiteConfig = {
 	subtitle: "Security Research & Development",
 	lang: "ko", // Korean
 	themeColor: {
-		hue: 200, // Teal/Cyan theme
+		hue: 175, // Teal green to match banner
 		fixed: true,
 	},
 	banner: {
