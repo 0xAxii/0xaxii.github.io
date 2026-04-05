@@ -60,6 +60,11 @@ export const profileConfig: ProfileConfig = {
 			icon: "fa6-brands:x-twitter",
 			url: "https://x.com/axii7777",
 		},
+		{
+			name: "Dreamhack",
+			icon: "fa6-solid:flag",
+			url: "https://dreamhack.io/users/77698",
+		},
 	],
 };
 
