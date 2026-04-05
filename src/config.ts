@@ -13,7 +13,7 @@ export const siteConfig: SiteConfig = {
 	lang: "ko", // Korean
 	themeColor: {
 		hue: 200, // Teal/Cyan theme
-		fixed: false,
+		fixed: true,
 	},
 	banner: {
 		enable: true,
