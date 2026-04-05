@@ -62,7 +62,7 @@ export const profileConfig: ProfileConfig = {
 		},
 		{
 			name: "Dreamhack",
-			icon: "fa6-solid:flag",
+			icon: "dreamhack",
 			url: "https://dreamhack.io/users/77698",
 		},
 	],
