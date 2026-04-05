@@ -8,7 +8,7 @@ import type {
 import { LinkPreset } from "./types/config";
 
 export const siteConfig: SiteConfig = {
-	title: "Axii's Security Blog",
+	title: "Axii's Blog",
 	subtitle: "Security Research & Development",
 	lang: "ko", // Korean
 	themeColor: {
@@ -46,7 +46,7 @@ export const navBarConfig: NavBarConfig = {
 };
 
 export const profileConfig: ProfileConfig = {
-	avatar: "assets/images/demo-avatar.png",
+	avatar: "assets/images/avatar.png",
 	name: "Axii",
 	bio: "Security Researcher & Developer",
 	links: [
