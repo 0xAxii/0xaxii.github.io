@@ -9,4 +9,5 @@ Interested in Offensive Security, AI, Development
 
 ## Contact
 
+- Email: axii@sju.ac.kr
 - GitHub: [0xAxii](https://github.com/0xAxii)
