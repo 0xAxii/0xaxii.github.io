@@ -82,7 +82,18 @@ export async function getCategoryList(): Promise<Category[]> {
 	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
+	const defaultCategories = [
+		"개발",
+		"CTF/Wargame",
+		"BugBounty",
+		"블로그/기술문서",
+		"논문/컨퍼런스",
+		"공모전/자격증",
+	];
 	const count: { [key: string]: number } = {};
+	for (const cat of defaultCategories) {
+		count[cat] = count[cat] || 0;
+	}
 	allBlogPosts.forEach((post: { data: { category: string | null } }) => {
 		if (!post.data.category) {
 			const ucKey = i18n(I18nKey.uncategorized);
