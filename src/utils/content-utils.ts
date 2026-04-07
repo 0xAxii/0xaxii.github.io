@@ -89,7 +89,6 @@ export async function getCategoryList(): Promise<Category[]> {
 		"블로그/기술문서",
 		"논문/컨퍼런스",
 		"공모전/자격증",
-		"ETC",
 	];
 	const count: { [key: string]: number } = {};
 	for (const cat of defaultCategories) {
