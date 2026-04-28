@@ -1,7 +1,7 @@
 ---
 title: "Hacktheon Sejong 2026 Quals Writeup"
 published: 2026-04-28
-description: "Hacktheon Sejong 2026 Quals에서 푼 문제 writeup을 정리했다"
+description: "Hacktheon Sejong 2026 Quals에서 푼 문제 풀이를 정리했다"
 category: "CTF/Wargame"
 tags: ["Hacktheon Sejong", "CTF", "Writeup"]
 draft: false
@@ -11,24 +11,24 @@ draft: false
 
 ### Immutable
 
-Keywords
+키워드
 
 * Stack Buffer Overflow
 * Local Variable Overwrite
 * Canary Bypass
 
-흐름은 간단합니다.
+구조는 단순했다.
 
-1. `scanf("%s", buf)`에서 길이 제한 없이 입력을 받습니다.
-2. 입력 버퍼는 `[rbp-0x90]`, 비교 변수는 `[rbp-0x10]`에 있습니다.
-3. `0x80`바이트를 채운 뒤 `0xdeadbeef`를 쓰면 비교 변수만 바뀝니다.
-4. canary는 `[rbp-0x8]`에 있으므로 건드리지 않습니다.
-5. 조건문을 통과하면 바이너리 안의 `system("/bin/sh")`가 호출됩니다.
+1. `scanf("%s", buf)`에서 길이 제한 없이 입력을 받는다.
+2. 입력 버퍼는 `[rbp-0x90]`, 비교 변수는 `[rbp-0x10]`에 있다.
+3. `0x80` 바이트를 채운 뒤 `0xdeadbeef`를 쓰면 비교 변수만 바뀐다.
+4. canary는 `[rbp-0x8]`에 있으므로 건드리지 않는다.
+5. 조건문을 통과하면 바이너리 안의 `system("/bin/sh")`가 호출된다.
 
-보호기법은 Full RELRO, Canary, NX, PIE가 모두 켜져 있습니다.
-하지만 return address를 덮는 문제가 아니라, canary 앞에 있는 local variable만 바꾸는 문제입니다.
+보호기법은 Full RELRO, Canary, NX, PIE가 모두 켜져 있었다.
+다만 return address까지 덮을 필요는 없고, canary 앞에 있는 local variable만 바꾸면 된다.
 
-핵심 배치는 다음과 같습니다.
+스택 배치는 이렇게 잡힌다.
 
 ```text
 rbp-0x90 : input buffer
@@ -37,15 +37,15 @@ rbp-0x10 : check variable
 rbp-0x08 : stack canary
 ```
 
-payload도 그대로 나옵니다.
+그래서 payload도 바로 정해진다.
 
 ```python
 payload = b"A" * 0x80 + p32(0xdeadbeef)
 ```
 
-exploit은 이 payload를 보내고 shell에서 flag를 읽으면 됩니다.
+이 payload를 보내면 shell이 뜨고, 거기서 플래그를 읽었다.
 
-Exploit code
+익스플로잇 코드
 
 ```python
 #!/usr/bin/env python3
@@ -70,11 +70,11 @@ if __name__ == "__main__":
     main()
 ```
 
-flag : `hacktheon2026{ed2190f6865ca1e3fea816b296445228064a51ec9492b518f514a60624f43d850738dd60b2c9d0893cb5c30f7d1efeaa575527f0b8534a96aa170356d2f8e2d0f3da4b43880faa71}`
+플래그 : `hacktheon2026{ed2190f6865ca1e3fea816b296445228064a51ec9492b518f514a60624f43d850738dd60b2c9d0893cb5c30f7d1efeaa575527f0b8534a96aa170356d2f8e2d0f3da4b43880faa71}`
 
 ### Old Days
 
-Keywords
+키워드
 
 * glibc 2.39
 * UAF
@@ -83,35 +83,35 @@ Keywords
 * House of Apple 2
 * SIGSEGV Handler
 
-note manager 형태의 heap 문제입니다.
-`delete` 이후 note pointer와 size를 초기화하지 않아서 UAF가 발생합니다.
+note manager로 구현된 heap 문제였다.
+`delete` 이후 note pointer와 size를 초기화하지 않아서 UAF가 발생한다.
 
-풀이 흐름은 다음과 같습니다.
+전체 풀이는 대략 이런 순서로 갔다.
 
-1. freed large chunk를 `read`해서 `main_arena` 주소를 leak합니다.
-2. largebin chunk의 self pointer로 heap 주소를 구합니다.
-3. stdin pipe를 nonblocking으로 바꿔 slot에 잡히지 않는 live chunk를 만듭니다.
-4. largebin attack으로 `_IO_list_all`을 fake FILE 쪽으로 돌립니다.
-5. House of Apple 2 형태로 fake FILE chain을 구성합니다.
-6. `stdin->_markers`를 오염시켜 내부 SIGSEGV를 발생시킵니다.
-7. SIGSEGV handler가 `exit(1)`을 호출하고, exit flush에서 fake FILE이 실행됩니다.
+1. freed large chunk를 `read`해서 `main_arena` 주소를 leak한다.
+2. largebin chunk의 self pointer로 heap 주소를 구한다.
+3. stdin pipe를 nonblocking으로 바꿔 slot에 잡히지 않는 live chunk를 만든다.
+4. largebin attack으로 `_IO_list_all`을 fake FILE 쪽으로 돌린다.
+5. House of Apple 2 흐름에 맞춰 fake FILE chain을 구성한다.
+6. `stdin->_markers`를 오염시켜 내부 SIGSEGV를 발생시킨다.
+7. SIGSEGV handler가 `exit(1)`을 호출하고, exit flush에서 fake FILE이 실행된다.
 
-처음에는 UAF read로 leak을 만듭니다.
-unsorted bin fd에서 libc base를 계산하고, largebin에 들어간 chunk의 `fd_nextsize` self pointer에서 heap base를 잡았습니다.
+먼저 UAF read로 leak을 잡았다.
+unsorted bin fd에서 libc base를 계산하고, largebin에 들어간 chunk의 `fd_nextsize` self pointer로 heap base를 구했다.
 
-이후 문제는 안정적인 trigger였습니다.
-원격에서는 바이너리가 setuid-root로 실행되고, 외부에서 signal을 보내는 방식은 사용할 수 없습니다.
-대신 문제 내부의 SIGSEGV handler를 이용했습니다.
-handler는 특정 상태에서 `exit(1)`을 호출하므로, 프로세스 내부에서 SIGSEGV를 만들면 exit flush까지 도달할 수 있습니다.
+그 다음 관건은 안정적인 trigger였다.
+원격에서는 바이너리가 setuid-root로 실행되고, 외부에서 signal을 보내는 방식은 사용할 수 없었다.
+그래서 문제 내부의 SIGSEGV handler를 이용했다.
+handler는 특정 상태에서 `exit(1)`을 호출하므로, 프로세스 내부에서 SIGSEGV를 만들면 exit flush까지 도달할 수 있다.
 
-FSOP 쪽은 `_IO_list_all`에 fake FILE을 연결하고, wide data/vtable을 House of Apple 2 흐름에 맞췄습니다.
-최종 호출은 `system("cat flag")`가 되도록 구성했습니다.
+FSOP 쪽은 `_IO_list_all`에 fake FILE을 연결하고, wide data/vtable을 House of Apple 2 흐름에 맞췄다.
+최종 호출은 `system("cat flag")`가 되도록 구성했다.
 
-마지막 trigger는 `stdin->_markers`였습니다.
-largebin attack으로 marker list를 잘못된 chunk로 돌려두면, 다음 입력 처리에서 stdin marker를 따라가다가 SIGSEGV가 발생합니다.
-이 SIGSEGV가 handler를 거쳐 `exit(1)`로 이어지고, exit flush에서 fake FILE chain이 실행됩니다.
+마지막으로 건드린 곳은 `stdin->_markers`였다.
+largebin attack으로 marker list를 잘못된 chunk로 돌려두면, 다음 입력 처리에서 stdin marker를 따라가다가 SIGSEGV가 발생한다.
+이 SIGSEGV가 handler를 거쳐 `exit(1)`로 이어지고, exit flush에서 fake FILE chain이 실행된다.
 
-요약하면 다음 그림입니다.
+정리하면 이런 흐름이다.
 
 ```text
 UAF read
@@ -124,7 +124,7 @@ UAF read
   -> system("cat flag")
 ```
 
-Exploit code
+익스플로잇 코드
 
 ```python
 #!/usr/bin/env python3
@@ -433,11 +433,11 @@ if __name__ == '__main__':
     main()
 ```
 
-flag : `hacktheon2026{o1d-d4y5_g1ibc_exp10it4ti0n}`
+플래그 : `hacktheon2026{o1d-d4y5_g1ibc_exp10it4ti0n}`
 
 ### even_made
 
-Keywords
+키워드
 
 * Shellcode
 * Even-byte Constraint
@@ -445,23 +445,23 @@ Keywords
 * PIE Base Leak
 * Crash Oracle
 
-입력 shellcode의 모든 byte가 짝수여야 합니다.
-또한 seccomp가 `nanosleep`만 허용하므로, syscall로 flag를 출력할 수 없습니다.
+입력 shellcode는 모든 byte가 짝수여야 했다.
+또한 seccomp가 `nanosleep`만 허용하므로, syscall로 플래그를 출력할 수 없었다.
 
-flag는 프로그램 시작 시 전역 변수 `flag_mem`에 올라갑니다.
-출력이 막혀 있으니, shellcode가 flag bit를 읽고 crash 종류로 bit 값을 알려주는 oracle을 만들었습니다.
+플래그는 프로그램 시작 시 전역 변수 `flag_mem`에 올라간다.
+출력 경로가 막혀 있어서, shellcode가 플래그 bit를 읽고 crash 종류로 bit 값을 알려주는 oracle을 만들었다.
 
-구분은 다음처럼 했습니다.
+구분은 이렇게 잡았다.
 
 ```text
 bit == 1 -> SIGTRAP
 bit == 0 -> SIGSEGV
 ```
 
-PIE base는 shellcode 호출 직후 stack에 남아 있는 return address에서 잡았습니다.
-even-byte instruction만 써야 하므로 사용할 수 있는 instruction이 제한되지만, `pop rax`로 return address를 가져온 뒤 짝수 byte instruction 조합으로 `flag_mem`까지 offset을 더할 수 있었습니다.
+PIE base는 shellcode 호출 직후 stack에 남아 있는 return address에서 잡았다.
+even-byte instruction만 써야 해서 사용할 수 있는 instruction이 제한되지만, `pop rax`로 return address를 가져온 뒤 짝수 byte instruction 조합으로 `flag_mem`까지 offset을 더할 수 있었다.
 
-bit leak shellcode의 핵심 형태는 다음과 같습니다.
+bit leak shellcode는 대략 이런 모양이다.
 
 ```python
 code  = b"\x58"          # pop rax
@@ -473,10 +473,10 @@ code += b"\xcc"          # int3
 code += b"\xf4"          # hlt
 ```
 
-remote에서는 각 bit를 여러 번 질의해서 crash 결과를 majority vote로 정했습니다.
-이 과정을 `0x50`바이트 정도 반복하면 null byte 전까지 flag가 복구됩니다.
+remote에서는 같은 bit를 여러 번 보내 보고, crash 결과를 majority vote로 정했다.
+이 과정을 `0x50` 바이트 정도 반복하면 null byte 전까지 플래그가 복구된다.
 
-Exploit code
+익스플로잇 코드
 
 ```python
 from pwn import *
@@ -597,13 +597,13 @@ for i in range(0x50):
 print(flag.decode())
 ```
 
-flag : `hacktheon2026{Ev3n_R3str1ct3d_Sh3lLc0d3_M4sT3r}`
+플래그 : `hacktheon2026{Ev3n_R3str1ct3d_Sh3lLc0d3_M4sT3r}`
 
 ## Reversing
 
 ### Brain Outside
 
-Keywords
+키워드
 
 * Reversing
 * Remote Code Loading
@@ -611,10 +611,10 @@ Keywords
 * Self-decrypting Shellcode
 * PNG Recovery
 
-문제 이름처럼 실제 코드가 바이너리 안에 없습니다.
-`client`는 서버에서 stage를 받아 RWX `mmap`에 올리고 바로 호출하는 loader입니다.
+문제 이름처럼 실제 코드는 바이너리 안에 없었다.
+`client`는 서버에서 stage를 받아 RWX `mmap`에 올리고 바로 호출하는 loader다.
 
-흐름은 다음과 같습니다.
+loader 쪽 동작은 대략 이렇다.
 
 ```c
 read(sock, &len, 4);
@@ -624,14 +624,14 @@ ret = ((uint64_t (*)())buf)();
 send(sock, &ret, 8);
 ```
 
-stage는 매번 다른 decrypt stub을 가지고 있습니다.
-8-byte XOR, cumulative add 후 XOR, NOT/pair swap 같은 변형이 반복되므로, stub을 패턴화해 body를 복호화했습니다.
+stage는 매번 다른 decrypt stub을 가지고 있었다.
+8-byte XOR, cumulative add 후 XOR, NOT/pair swap 같은 변형이 반복되므로, stub을 패턴화해 body를 복호화했다.
 
-처음에는 stage를 그대로 실행하며 통과하려고 했지만, 프로토콜이 단순했습니다.
-서버는 stage 반환값만 받기 때문에, 검증 코드를 실행하지 않고도 통과한 것처럼 ret 값을 보내며 다음 stage를 계속 받을 수 있습니다.
+처음에는 stage를 그대로 실행해서 통과하려고 했는데, 프로토콜이 생각보다 단순했다.
+서버는 stage 반환값만 받기 때문에, 검증 코드를 실행하지 않고도 통과한 것처럼 ret 값을 보내며 다음 stage를 계속 받을 수 있다.
 
-복호화된 stage 대부분은 `flag.png`의 특정 구간을 검증합니다.
-각 stage에서 다음 세 값을 뽑았습니다.
+복호화된 stage 대부분은 `flag.png`의 특정 구간을 검증한다.
+각 stage에서는 세 값만 뽑으면 됐다.
 
 ```text
 file offset
@@ -639,7 +639,7 @@ length
 expected bytes
 ```
 
-이를 빈 PNG에 계속 패치하면 됩니다.
+이 값들을 빈 PNG에 계속 덮어썼다.
 
 ```python
 with open("flag_recovered.png", "r+b") as f:
@@ -647,45 +647,45 @@ with open("flag_recovered.png", "r+b") as f:
     f.write(expected)
 ```
 
-충분히 stage를 모으면 gap이 사라집니다.
+stage를 충분히 모으면 gap이 없어진다.
 
 ```text
 known 9193720 of 9193720
 gaps 0 []
 ```
 
-복원된 이미지는 다음과 같습니다.
+복원된 이미지는 아래와 같다.
 
 ![Brain Outside recovered flag](./flag_recovered.png)
 
-flag : `hacktheon2026{90364e95eddf0fc1d5f54662d8e80913}`
+플래그 : `hacktheon2026{90364e95eddf0fc1d5f54662d8e80913}`
 
 ### Recover It!
 
-Keywords
+키워드
 
 * ELF
 * XOR
 * `memcmp`
 * Known Table Recovery
 
-검증 루틴은 짧습니다.
-입력 길이가 64인지 확인한 뒤, 각 byte에 `i + 0x67`을 XOR하고 `.data`의 `cmptable`과 비교합니다.
+검증 루틴은 짧다.
+입력 길이가 64인지 확인한 뒤, 각 byte에 `i + 0x67`을 XOR하고 `.data`의 `cmptable`과 비교한다.
 
-수식으로 정리하면 다음과 같습니다.
+식으로 쓰면 이렇게 된다.
 
 ```text
 encoded[i] = input[i] ^ (i + 0x67)
 encoded[i] == cmptable[i]
 ```
 
-XOR은 자기 자신이 역연산이므로 정답은 바로 복구됩니다.
+XOR은 자기 자신이 역연산이므로 정답은 바로 복구된다.
 
 ```text
 input[i] = cmptable[i] ^ (i + 0x67)
 ```
 
-`cmptable`은 `.data`의 `0x4020`에 있습니다.
+`cmptable`은 `.data`의 `0x4020`에 있다.
 
 ```python
 cmptable = bytes.fromhex(
@@ -698,7 +698,7 @@ cmptable = bytes.fromhex(
 correct = bytes(c ^ ((i + 0x67) & 0xff) for i, c in enumerate(cmptable))
 ```
 
-Exploit code
+익스플로잇 코드
 
 ```python
 cmptable = bytes.fromhex(
@@ -717,11 +717,11 @@ print(correct_input.decode())
 print(f"hacktheon2026{{{correct_input.decode()}}}")
 ```
 
-flag : `hacktheon2026{22c34e819d2800db605d9fdbc9ba9ab71d6b9175d6b3b016c49cd94624f545c3}`
+플래그 : `hacktheon2026{22c34e819d2800db605d9fdbc9ba9ab71d6b3b016c49cd94624f545c3}`
 
 ### Until Executing
 
-Keywords
+키워드
 
 * OCaml Native
 * Tagged Integer
@@ -729,27 +729,27 @@ Keywords
 * Closure
 * Constraint Solving
 
-OCaml native 바이너리입니다.
-stripped이지만 동적 심볼에 `camlMain`, `camlProc_a_engine`, `camlProc_b_engine` 등이 남아 있어서 구조를 잡을 수 있었습니다.
+OCaml native 바이너리다.
+stripped이지만 동적 심볼에 `camlMain`, `camlProc_a_engine`, `camlProc_b_engine` 등이 남아 있어서 구조를 잡을 수 있었다.
 
-parent만 따라가면 검증 루틴이 잘 보이지 않습니다.
-`run_child`가 `fork()`를 호출하고, 실제 verifier는 child process에서 실행됩니다.
+parent만 따라가면 검증 루틴이 잘 보이지 않는다.
+`run_child`가 `fork()`를 호출하고, 실제 verifier는 child process에서 실행된다.
 
-입력 조건은 다음과 같습니다.
+입력은 이 조건을 만족해야 한다.
 
 ```text
 length   = 64
 alphabet = abcdefghijklmnopqrstuvwxyz_0123456789!
 ```
 
-OCaml immediate integer는 `(n << 1) | 1` 형태입니다.
-따라서 disassembly에서 길이 비교 값으로 보이는 `0x81`은 실제로 64입니다.
+OCaml immediate integer는 `(n << 1) | 1` 식으로 표현된다.
+따라서 disassembly에서 길이 비교 값으로 보이는 `0x81`은 실제로 64다.
 
-`Proc_a_engine`과 `Proc_b_engine`은 둘 다 `explode -> run -> collapse` 구조입니다.
-`run`에서 check closure를 쌓고, 마지막 `collapse`에서 실제 검증이 평가됩니다.
-문제 제목이 가리키는 부분도 이 지점입니다.
+`Proc_a_engine`과 `Proc_b_engine`은 둘 다 `explode -> run -> collapse` 구조다.
+`run`에서 check closure를 쌓고, 마지막 `collapse`에서 실제 검증이 평가된다.
+문제 제목이 가리키는 부분도 이 지점이었다.
 
-문자는 ASCII 그대로 쓰이지 않고 alphabet index의 tagged value로 바뀝니다.
+문자는 ASCII 그대로 쓰이지 않고 alphabet index의 tagged value로 바뀐다.
 
 ```text
 a -> 1
@@ -758,23 +758,23 @@ c -> 5
 ...
 ```
 
-`Proc_b`의 current check와 state update를 Python으로 옮겨 candidate를 줄였습니다.
-branch는 빠르게 줄어들고, 마지막에는 하나만 남습니다.
-그 candidate를 `Proc_a` checker에도 넣어 검증했습니다.
+`Proc_b`의 current check와 state update를 Python으로 옮겨 candidate를 줄였다.
+branch는 빠르게 줄어들고, 마지막에는 하나만 남았다.
+그 candidate를 `Proc_a` checker에도 넣어 검증했다.
 
-복구된 내부 문자열은 다음과 같습니다.
+복구된 내부 문자열은 이렇다.
 
 ```text
 ovajumher0erwkl28_i8eecp!hb5enitsj6ly5hx05qel7a2z1gb6y8vi4fd4l93
 ```
 
-flag : `hacktheon2026{ovajumher0erwkl28_i8eecp!hb5enitsj6ly5hx05qel7a2z1gb6y8vi4fd4l93}`
+플래그 : `hacktheon2026{ovajumher0erwkl28_i8eecp!hb5enitsj6ly5hx05qel7a2z1gb6y8vi4fd4l93}`
 
 ## Web
 
 ### Dark Harbor 1
 
-Keywords
+키워드
 
 * Edge Proxy
 * SSRF
@@ -784,45 +784,45 @@ Keywords
 * Algorithm Confusion
 * Absolute-form Request Target
 
-최종 목표는 api-server가 생성하는 internal admin console입니다.
-여기에는 flag와 Phase 2에서 쓰는 `deployment_hmac_secret`이 들어 있습니다.
+최종 목표는 api-server가 생성하는 internal admin console이었다.
+여기에는 플래그와 Phase 2에서 쓰는 `deployment_hmac_secret`이 들어 있었다.
 
-첫 단계는 `/build/fetch-artifact`의 redirect SSRF입니다.
-처음 URL은 검사하지만 redirect 이후 목적지는 다시 검사하지 않습니다.
-공개 redirector를 거쳐 `api-server:6000/config`를 읽으면 내부 routing 정보와 `HMAC_SECRET`이 나옵니다.
+첫 단계는 `/build/fetch-artifact`의 redirect SSRF였다.
+처음 URL은 검사하지만 redirect 이후 목적지는 다시 검사하지 않았다.
+공개 redirector를 거쳐 `api-server:6000/config`를 읽으면 내부 routing 정보와 `HMAC_SECRET`이 나온다.
 
-이 secret으로 api-server local JWT key를 만들 수 있습니다.
+이 secret으로 api-server local JWT key를 만들 수 있었다.
 
 ```text
 LOCAL_JWT_KEY = HMAC-SHA256(HMAC_SECRET, "darkharbor-local-jwt").hexdigest()
 ```
 
-이 key로 `role=pipeline_admin`, `iss=darkharbor-local` 토큰을 만들면 pipeline admin API를 사용할 수 있습니다.
+이 key로 `role=pipeline_admin`, `iss=darkharbor-local` 토큰을 만들면 pipeline admin API를 사용할 수 있다.
 
-다음은 policy seed입니다.
-public key PEM을 JUnit report의 첫 번째 failure output에 넣어 업로드하면, policy engine이 그 PEM을 JWKS entry로 가져갑니다.
+그 다음은 policy seed였다.
+public key PEM을 JUnit report의 첫 번째 failure output에 넣어 업로드하면, policy engine이 그 PEM을 JWKS entry로 가져간다.
 
-`/internal/policy-seed`는 edge proxy에서 막히지만, absolute-form request target과 percent-encoding을 섞으면 우회됩니다.
+`/internal/policy-seed`는 edge proxy에서 막히지만, absolute-form request target과 percent-encoding을 섞으면 우회할 수 있다.
 
 ```text
 request target = http://api-server/%69nternal/policy-seed
 ```
 
-edge proxy는 이를 `/internal`로 보지 못하고, Fastify는 decode 후 `/internal/policy-seed` route로 처리합니다.
+edge proxy는 이를 `/internal`로 보지 못하고, Fastify는 decode 후 `/internal/policy-seed` route로 처리한다.
 
-마지막 취약점은 `fast-jwt` 검증 차이입니다.
-policy engine은 seed된 PEM 앞에 audit banner로 개행을 붙입니다.
+마지막 취약점은 `fast-jwt` 검증 차이였다.
+policy engine은 seed된 PEM 앞에 audit banner로 개행을 붙인다.
 
 ```text
 key = "\n" + public_key_pem
 ```
 
-이 값이 RSA public key로 정상 인식되지 않고 HS256 secret처럼 쓰였습니다.
-따라서 같은 값을 HMAC key로 사용해 `role=admin` policy token을 만들 수 있습니다.
+이 값이 RSA public key로 정상 인식되지 않고 HS256 secret처럼 쓰였다.
+따라서 같은 값을 HMAC key로 사용해 `role=admin` policy token을 만들 수 있었다.
 
-이 token을 들고 같은 request-target 우회로 `/internal/admin-console.json`을 읽으면 됩니다.
+이 token을 들고 같은 request-target 우회로 `/internal/admin-console.json`을 읽었다.
 
-Exploit code
+익스플로잇 코드
 
 ```python
 import base64
@@ -909,11 +909,11 @@ print(
 )
 ```
 
-flag : `hacktheon2026{sil3nt_tid3_bre4ch}`
+플래그 : `hacktheon2026{sil3nt_tid3_bre4ch}`
 
 ### Dark Harbor 2
 
-Keywords
+키워드
 
 * Edge Proxy
 * Fragment Confusion
@@ -922,39 +922,38 @@ Keywords
 * Redis Token Race
 * AES-GCM
 
-Dark Harbor 2는 Phase 1에서 얻은 `deployment_hmac_secret`으로 시작합니다.
-`/api/phase1-handoff`에 secret을 보내면 REVIEW 상태의 `workspace_id`와 deploy API용 `admin_jwt`가 나옵니다.
+Dark Harbor 2는 Phase 1에서 얻은 `deployment_hmac_secret`으로 시작했다.
+`/api/phase1-handoff`에 secret을 보내면 REVIEW 상태의 `workspace_id`와 deploy API용 `admin_jwt`가 나온다.
 
-flag는 policy-engine의 `/internal/admin/policy-override`에서 암호화됩니다.
-이 route는 internal 전용이고, JWT와 `X-Internal-HMAC`를 모두 확인합니다.
-인증값은 Phase 1에서 얻은 `HMAC_SECRET`으로 만들 수 있으므로, 남은 문제는 internal route 접근입니다.
+플래그는 policy-engine의 `/internal/admin/policy-override`에서 암호화된다.
+이 route는 internal 전용이고, JWT와 `X-Internal-HMAC`를 모두 확인한다.
+인증값은 Phase 1에서 얻은 `HMAC_SECRET`으로 만들 수 있으므로, 남은 문제는 internal route 접근이었다.
 
-우회는 `#` 처리 차이에서 나옵니다.
+우회는 `#` 처리 차이에서 나왔다.
 
 ```text
 /internal/admin/policy-override#/../../../health/policy-engine
 ```
 
-edge proxy는 `#`를 path 문자처럼 보고 path traversal 정규화를 합니다.
-결과적으로 `/health/policy-engine`으로 라우팅됩니다.
-반면 FastAPI/Uvicorn은 `#` 뒤를 fragment처럼 보고 `request.url.path`에서 제외합니다.
-따라서 실제 handler는 `/internal/admin/policy-override`가 됩니다.
+edge proxy는 `#`를 path 문자처럼 보고 path traversal 정규화를 한다.
+결과적으로 `/health/policy-engine`으로 라우팅된다.
+반면 FastAPI/Uvicorn은 `#` 뒤를 fragment처럼 보고 `request.url.path`에서 제외한다.
+따라서 실제 handler는 `/internal/admin/policy-override`가 된다.
 
-일반 URL에 `#`를 넣으면 클라이언트가 fragment를 서버로 보내지 않기 때문에, raw HTTP나 `curl --request-target`이 필요합니다.
+일반 URL에 `#`를 넣으면 클라이언트가 fragment를 서버로 보내지 않기 때문에, raw HTTP나 `curl --request-target`이 필요했다.
 
-override가 성공하면 `deploy_token`과 `encrypted_secret`이 나옵니다.
-아직 flag는 AES-GCM으로 암호화되어 있습니다.
-복호화에는 `session_seal`과 `signing_key`가 필요합니다.
+override가 성공하면 `deploy_token`과 `encrypted_secret`이 나온다.
+아직 플래그는 AES-GCM으로 암호화되어 있어서 `session_seal`과 `signing_key`가 필요했다.
 
-deploy token 사용 로직은 Redis에서 token을 `GET`한 뒤 `DEL`합니다.
-두 동작이 원자적이지 않아서, 같은 token에 `seal`과 `sign` 요청을 동시에 보내면 둘 다 `GET`에 성공할 수 있습니다.
+deploy token 사용 로직은 Redis에서 token을 `GET`한 뒤 `DEL`한다.
+두 동작이 원자적이지 않아서, 같은 token에 `seal`과 `sign` 요청을 동시에 보내면 둘 다 `GET`에 성공할 수 있었다.
 
 ```text
 seal -> session_seal
 sign -> signing_key
 ```
 
-복호화 key는 다음 구조입니다.
+복호화 key는 이렇게 만들었다.
 
 ```python
 key = HMAC_SHA256(signing_key, session_seal)[:32]
@@ -962,7 +961,7 @@ nonce = encrypted_secret[:12]
 flag = AESGCM(key).decrypt(nonce, encrypted_secret[12:], None)
 ```
 
-Exploit code
+익스플로잇 코드
 
 ```python
 import base64
@@ -1211,11 +1210,11 @@ flag = decrypt_flag(
 print("[+] flag:", flag)
 ```
 
-flag : `hacktheon2026{lighth0use_se4l_cr4ck}`
+플래그 : `hacktheon2026{lighth0use_se4l_cr4ck}`
 
 ### Observatory
 
-Keywords
+키워드
 
 * Blackbox
 * Express
@@ -1224,25 +1223,25 @@ Keywords
 * Error Oracle
 * Blind Exfiltration
 
-대시보드는 Prometheus metric query 기능을 제공합니다.
-`/api/metrics`에서 `secret_config`, `internal_token`, `db_credentials` 같은 metric 이름이 보입니다.
-하지만 `metric` 파라미터로 직접 읽으려고 하면 결과가 현재 namespace 기준으로 가공되어 원본 label/value가 나오지 않습니다.
+대시보드에는 Prometheus metric query 기능이 있다.
+`/api/metrics`를 보면 `secret_config`, `internal_token`, `db_credentials` 같은 metric 이름이 보인다.
+하지만 `metric` 파라미터로 직접 읽으려고 하면 결과가 현재 namespace 기준으로 가공되어 원본 label/value가 나오지 않았다.
 
-핵심은 `agg` 파라미터입니다.
-UI에서는 `sum`, `avg`, `max` 같은 값만 고르게 되어 있지만, API에는 문자열이 그대로 들어갑니다.
-서버는 대략 다음 형태로 PromQL을 조립합니다.
+여기서 볼 부분은 `agg` 파라미터였다.
+UI에서는 `sum`, `avg`, `max` 같은 값만 고르게 되어 있지만, API에는 문자열이 그대로 들어간다.
+서버는 PromQL을 대략 이런 식으로 조립한다.
 
 ```text
 {agg}({metric}{namespace="현재 namespace"})
 ```
 
-`agg`에 expression을 넣고 마지막을 `or sum`으로 끝내면, 뒤에 붙는 `(...metric...)` 부분을 fallback 함수 호출로 소비시킬 수 있습니다.
+`agg`에 expression을 넣고 마지막을 `or sum`으로 끝내면, 뒤에 붙는 `(...metric...)` 부분을 fallback 함수 호출로 소비시킬 수 있다.
 
-출력은 숨겨져 있으므로 error oracle을 만들었습니다.
-`secret_config{flag=~"^PREFIX.*"}`가 매칭되지 않으면 empty vector라 query가 성공합니다.
-매칭되면 일부러 many-to-one vector matching이 발생하도록 만들어 query error를 냅니다.
+출력은 숨겨져 있어서 error oracle을 만들었다.
+`secret_config{flag=~"^PREFIX.*"}`가 매칭되지 않으면 empty vector라 query가 성공한다.
+매칭되면 일부러 many-to-one vector matching이 발생하도록 만들어 query error를 낸다.
 
-oracle 형태는 다음과 같습니다.
+oracle은 이렇게 잡았다.
 
 ```text
 sum(secret_config{flag=~"^PREFIX.*"})
@@ -1251,16 +1250,16 @@ sum by(__name__)({__name__=~"go_.*"})
 or sum
 ```
 
-응답 기준은 이렇게 잡았습니다.
+응답 기준은 이렇게 봤다.
 
 ```text
 Query failed -> prefix match
 success      -> prefix miss
 ```
 
-기본 계정 `admin:password`를 찾은 뒤, 이 oracle로 flag label을 한 글자씩 brute force했습니다.
+기본 계정 `admin:password`를 찾은 뒤, 이 oracle로 플래그 label을 한 글자씩 brute force했다.
 
-Exploit code
+익스플로잇 코드
 
 ```python
 import re
@@ -1318,13 +1317,13 @@ for _ in range(120):
 print("FLAG:", prefix)
 ```
 
-flag : `hacktheon2026{pr0m3th3us_m3tr1c_s1d3ch4nn3l}`
+플래그 : `hacktheon2026{pr0m3th3us_m3tr1c_s1d3ch4nn3l}`
 
 ## AI
 
 ### Voice Over
 
-Keywords
+키워드
 
 * Voice Clone
 * ASR
@@ -1332,28 +1331,28 @@ Keywords
 * Audio Spoofing
 * WAV Mixing
 
-서버는 업로드한 wav에 대해 두 값을 봅니다.
+서버는 업로드한 wav에서 두 값을 본다.
 
 ```text
 text_similarity    >= 0.8
 speaker_similarity >= 0.8
 ```
 
-일반 TTS로 target sentence를 합성하면 text similarity는 충분하지만 speaker similarity가 낮습니다.
-반대로 reference wav를 그대로 넣으면 speaker similarity는 높지만 transcript가 달라 text similarity가 낮습니다.
+일반 TTS로 target sentence를 합성하면 text similarity는 충분하지만 speaker similarity가 낮다.
+반대로 reference wav를 그대로 넣으면 speaker similarity는 높지만 transcript가 달라 text similarity가 낮다.
 
-핵심은 reference 음성을 ASR에는 의미 없는 소리처럼 만들고, speaker embedding에는 화자 특징이 남게 하는 것입니다.
-reference wav를 reverse한 뒤 낮은 볼륨으로 target TTS 뒤에 붙였습니다.
+여기서는 reference 음성을 ASR에는 의미 없는 소리처럼 만들고, speaker embedding에는 화자 특징이 남게 하는 쪽으로 갔다.
+reference wav를 reverse한 뒤 낮은 볼륨으로 target TTS 뒤에 붙였다.
 
-앞부분의 TTS 때문에 ASR은 목표 문장을 주로 인식합니다.
-뒤쪽의 reverse reference는 transcript에는 크게 섞이지 않지만, speaker verification에는 화자 특징을 보탭니다.
+앞부분의 TTS 때문에 ASR은 목표 문장을 주로 인식한다.
+뒤쪽의 reverse reference는 transcript에는 크게 섞이지 않지만, speaker verification에는 화자 특징을 보탠다.
 
-볼륨은 `sample_003` reverse 기준으로 `0.12` 정도가 적당했습니다.
-너무 낮으면 speaker similarity가 부족하고, 너무 높으면 ASR transcript가 오염됩니다.
+볼륨은 `sample_003` reverse 기준으로 `0.12` 정도가 적당했다.
+너무 낮으면 speaker similarity가 부족하고, 너무 높으면 ASR transcript가 오염된다.
 
-성공한 제출에서는 speaker similarity `0.8026`, text similarity `0.8859`가 나왔습니다.
+성공한 제출에서는 speaker similarity `0.8026`, text similarity `0.8859`가 나왔다.
 
-Exploit commands
+익스플로잇 명령어
 
 ```bash
 curl -sS http://3.37.31.209:8000/api/challenge > challenge.json
@@ -1373,13 +1372,13 @@ curl -sS -F audio=@submit.wav -F token="$token" \
   http://3.37.31.209:8000/api/verify | jq .
 ```
 
-flag : `hacktheon2026{b7d30e21e4106a6ca4d451a218f15a97}`
+플래그 : `hacktheon2026{b7d30e21e4106a6ca4d451a218f15a97}`
 
 ## Misc
 
 ### CathedralOfTheLastCandle
 
-Keywords
+키워드
 
 * Interactive
 * Ternary State
@@ -1387,37 +1386,37 @@ Keywords
 * Tree DP
 * Dijkstra
 
-5 x 8 격자의 각 칸은 `.` / `*` / `~` 세 상태를 가집니다.
-이를 각각 0, 1, 2로 두고 mod 3 위에서 계산했습니다.
+5 x 8 격자의 각 칸은 `.` / `*` / `~` 세 상태를 가진다.
+이를 각각 0, 1, 2로 두고 mod 3 위에서 계산했다.
 
-문제의 핵심 연산은 다음과 같습니다.
+문제에서 쓰는 연산은 이렇다.
 
 ```text
 ring -> [a+b, a+2b]
 hush -> [2a+2b, 2a+b] (mod 3)
 ```
 
-`ring`을 두 번 적용하면 현재 칸과 bonded neighbor가 둘 다 부호 반전됩니다.
-따라서 각 칸에서 `ring`을 두 번 누른 전후 화면 차이를 보면, 현재 칸이 어느 칸과 연결되어 있는지 알 수 있습니다.
+`ring`을 두 번 적용하면 현재 칸과 bonded neighbor가 둘 다 부호 반전된다.
+따라서 각 칸에서 `ring`을 두 번 누른 전후 화면 차이를 보면, 현재 칸이 어느 칸과 연결되어 있는지 알 수 있다.
 
-먼저 snake path로 모든 칸을 방문하면서 상태를 기록했습니다.
-각 칸에서 `ring`, `ring`을 실행하고, 바뀐 칸 중 현재 칸이 아닌 칸을 parent로 잡습니다.
-이렇게 전체 bonded neighbor 관계를 복구하면 rooted tree가 됩니다.
+먼저 snake path로 모든 칸을 방문하면서 상태를 기록했다.
+각 칸에서 `ring`, `ring`을 실행하고, 바뀐 칸 중 현재 칸이 아닌 칸을 parent로 잡았다.
+이렇게 전체 bonded neighbor 관계를 복구하면 rooted tree가 된다.
 
-이제 문제는 트리 위에서 모든 값을 0으로 만드는 DP입니다.
-각 node에 대해 “subtree를 모두 0으로 만들었을 때 parent 값이 어떻게 바뀌는지”를 저장했습니다.
+이후에는 트리 위에서 모든 값을 0으로 만드는 DP를 짰다.
+각 node에 대해 “subtree를 모두 0으로 만들었을 때 parent 값이 어떻게 바뀌는지”를 저장했다.
 
 ```text
 rel[v][parent_before] = parent_after 후보들
 ```
 
-상태는 처리한 child 집합, 현재 칸 값, parent 값으로 두고 Dijkstra를 돌렸습니다.
-이미 0으로 만든 child에서 `ring`을 두 번 실행하면 child는 0으로 유지되고 현재 칸만 `x -> 2x`로 바뀌는데, 이 전이를 넣어야 안정적으로 풀렸습니다.
+상태는 처리한 child 집합, 현재 칸 값, parent 값으로 두고 Dijkstra를 돌렸다.
+이미 0으로 만든 child에서 `ring`을 두 번 실행하면 child는 0으로 유지되고 현재 칸만 `x -> 2x`로 바뀌는데, 이 전이를 넣어야 안정적으로 풀렸다.
 
-마지막 root `(4,7)`은 제단과 연결되어 있어 `ring`/`hush`로 root 값만 조정할 수 있습니다.
-모든 칸을 0으로 만든 뒤 root에서 `pray`를 실행하면 flag가 나옵니다.
+마지막 root `(4,7)`은 제단과 연결되어 있어 `ring`/`hush`로 root 값만 조정할 수 있다.
+모든 칸을 0으로 만든 뒤 root에서 `pray`를 실행하면 플래그가 나온다.
 
-Exploit code
+익스플로잇 코드
 
 ```python
 #!/usr/bin/env python3
@@ -1769,11 +1768,11 @@ if __name__ == "__main__":
     run()
 ```
 
-flag : `hacktheon2026{db423210b697d95bdb3ae4c2751302283d7dafc25beb10e8ab9fb8863986339e3dd35fbe52ab0ddffdcfb952596394547002d319ffe6725299b9a51455f48fe2ccb0308b7699fe43}`
+플래그 : `hacktheon2026{db423210b697d95bdb3ae4c2751302283d7dafc25beb10e8ab9fb8863986339e3dd35fbe52ab0ddffdcfb952596394547002d319ffe6725299b9a51455f48fe2ccb0308b7699fe43}`
 
 ### plottergeist
 
-Keywords
+키워드
 
 * PCAP
 * CoreXY
@@ -1781,45 +1780,45 @@ Keywords
 * Pen State Recovery
 * 5x7 Raster Text
 
-주어진 파일은 `plottergeist.pcap`과 `bench_mic.wav`입니다.
-pcap에는 plotter motion 정보가 있고, wav에는 같은 세션의 소리가 들어 있습니다.
-traffic만으로는 어떤 이동이 pen down인지 알 수 없습니다.
+파일은 `plottergeist.pcap`과 `bench_mic.wav` 두 개가 주어졌다.
+pcap에는 plotter motion 정보가 있고, wav에는 같은 세션의 소리가 들어 있었다.
+traffic만으로는 어떤 이동이 pen down인지 알 수 없었다.
 
-패킷 안에는 format 힌트가 있습니다.
+패킷 안에는 format 힌트가 있었다.
 
 ```text
 FMT:OP|SQ|DT|AM|BM
 ```
 
-CoreXY 구조이므로 모터 이동량은 좌표로 바꿀 수 있습니다.
+CoreXY 구조라 모터 이동량은 좌표로 바꿀 수 있다.
 
 ```text
 dX = (AM + BM) / 2
 dY = (AM - BM) / 2
 ```
 
-좌표 범위는 `X: 16 ~ 368`, `Y: 4 ~ 10`입니다.
-폭은 353, 높이는 7입니다.
+좌표 범위는 `X: 16 ~ 368`, `Y: 4 ~ 10`이다.
+폭은 353, 높이는 7이다.
 
 ```text
 353 = 59 * 6 - 1
 ```
 
-5x7 글자에 1픽셀 공백을 붙인 텍스트라고 보면 정확히 맞습니다.
+5x7 글자에 1픽셀 공백을 붙인 텍스트라고 보면 정확히 맞는다.
 
-남은 것은 `DT=4`와 `DT=5` 중 어느 쪽이 pen down인지 구분하는 일입니다.
-wav에서 motion 구간별 고주파 에너지를 비교하면 두 타입의 소리가 갈립니다.
-처음에는 더 시끄러운 쪽이 pen down처럼 보이지만, 첫 motion이 시작 위치로 이동하는 동작이라는 점을 보면 정리됩니다.
-첫 motion은 `DT=5`이고, 시작 이동에서는 잉크를 찍으면 안 됩니다.
-따라서 `DT=5`가 pen up, `DT=4`가 pen down입니다.
+남은 건 `DT=4`와 `DT=5` 중 어느 쪽이 pen down인지 구분하는 일이었다.
+wav에서 motion 구간별 고주파 에너지를 비교하면 두 타입의 소리가 갈린다.
+처음에는 더 시끄러운 쪽이 pen down처럼 보이지만, 첫 motion이 시작 위치로 이동하는 동작이라는 점을 보면 정리된다.
+첫 motion은 `DT=5`이고, 시작 이동에서는 잉크를 찍으면 안 된다.
+따라서 `DT=5`가 pen up, `DT=4`가 pen down이다.
 
-렌더링할 때는 `AM=BM=0`인 `DT=4` packet도 버리면 안 됩니다.
-이동량은 없지만 현재 위치에 점 하나를 찍는 명령입니다.
-이를 포함해 `DT=4`만 그리면 텍스트가 나옵니다.
+렌더링할 때는 `AM=BM=0`인 `DT=4` packet도 버리면 안 된다.
+이동량은 없지만 현재 위치에 점 하나를 찍는 명령이다.
+이를 포함해 `DT=4`만 그리면 텍스트가 나온다.
 
 ![reconstructed](./dt4_reconstructed_points.png)
 
-Exploit code
+익스플로잇 코드
 
 ```python
 import itertools
@@ -2138,4 +2137,4 @@ for L in [7, 8]:
         print(round(sc, 3), inner, lr)
 ```
 
-flag : `hacktheon2026{the_plotter_reveals_its_secret_through_sound}`
+플래그 : `hacktheon2026{the_plotter_reveals_its_secret_through_sound}`
