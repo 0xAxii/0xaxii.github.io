@@ -4,7 +4,7 @@ published: 2026-04-28
 description: "Hacktheon Sejong 2026 Quals에서 푼 문제 writeup을 정리했다"
 category: "CTF/Wargame"
 tags: ["Hacktheon Sejong", "CTF", "Writeup"]
-draft: true
+draft: false
 ---
 
 ## Pwnable
