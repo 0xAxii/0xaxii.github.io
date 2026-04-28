@@ -6,8 +6,6 @@ category: "CTF/Wargame"
 tags: ["OverTheWire", "Bandit", "Wargame", "Linux", "SSH"]
 ---
 
-# bandit
-
 # Level 0
 
 ![image.png](bandit/image.png)
