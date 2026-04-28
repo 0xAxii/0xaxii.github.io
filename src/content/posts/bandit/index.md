@@ -145,7 +145,7 @@ If you are following a course, workshop, walkthrough or other educational activi
 please inform the instructor about the rules as well and encourage them to
 contribute to the OverTheWire community so we can keep these games free!
 
-The password you are looking for is: ZjLjTmM6FvvyRnrb2rfNWOZOTa6ip5If
+The password you are looking for is: <redacted>
 ```
 
 아마 Level 0이라 그냥 readme에 두었나보다.
@@ -185,7 +185,7 @@ cat -로 읽으려하자 아무것도 뜨지않길래 ctrl+c로 끊었다.
 
 ```bash
 bandit1@bandit:~$ cat ./-
-263JGJPfgU6LtdEvgfWU1XP5yac29mFx
+<redacted>
 ```
 
 그래서 현재 디렉토리의 -파일이라고 경로로 찍어주니 제대로 출력이 되었다.
@@ -206,7 +206,7 @@ drwxr-xr-x 150 root    root    4096 Apr  3 15:20 ..
 -rw-r--r--   1 root    root     807 Mar 31  2024 .profile
 -rw-r-----   1 bandit3 bandit2   33 Apr  3 15:17 --spaces in this filename--
 bandit2@bandit:~$ cat ./--spaces\ in\ this\ filename-- 
-MNk8KNH3Usiio41PRUEoDFPqfxLPlSmx
+<redacted>
 ```
 
 Level 1과 같이 경로를 찍어주니 작동한다.
@@ -236,7 +236,7 @@ drwxr-xr-x 3 root    root    4096 Apr  3 15:18 ..
 bandit3@bandit:~/inhere$ cat ..
 ../                 ...Hiding-From-You  
 bandit3@bandit:~/inhere$ cat ...Hiding-From-You 
-2WmrDFRmJIq3IPxneAaMGhap0pFhF3NJ
+<redacted>
 ```
 
 리눅스에서 .으로 시작하는 파일은 숨김파일이라 ls로는 안보이고 ls -al로 찾고 읽어냈다.
@@ -284,7 +284,7 @@ bandit4@bandit:~/inhere$ cat ./-file00
         VN�F��#��ژ�:է����Vd�Z��כ�#�bandit4@bandit:~/inhere$ cat ./-file06
 o"ُ֛�� ,�i�M�
              -g@x,��v���z�bandit4@bandit:~/inhere$ cat ./-file07
-4oQYVPkxZOOEOO5pTW81FB8j8lxXGUQw
+<redacted>
 bandit4@bandit:~/inhere$ cat ./-file08
 ��uB�{N����ފ�!-��s��$aA�1mbandit4@bandit:~/inhere$ cat ./-file09
 �OP�vV�}�H�:�I�%�#�X�
@@ -295,7 +295,7 @@ bandit4@bandit:~/inhere$ cat ./-file08
 
 ```bash
 bandit4@bandit:~/inhere$ cat ./-file07
-4oQYVPkxZOOEOO5pTW81FB8j8lxXGUQw
+<redacted>
 ```
 
 이게 pw일것이다.
@@ -384,7 +384,7 @@ find: unknown predicate `-excutable'
 bandit5@bandit:~/inhere$ find . -size 1033c ! -executable
 ./maybehere07/.file2
 bandit5@bandit:~/inhere$ cat ./maybehere07/.file2
-HWasnPhtq9AVKe0dmk45nxy20cvUa6EG
+<redacted>
 ```
 
 뭔가 find로 검색해야겠다는건 알겠는데 정확한 옵션이 생각이 안나서 주어진 find의 링크로 가서 찾았다.
@@ -576,7 +576,7 @@ find: ‘/sys/kernel/debug’: Permission denied
 find: ‘/sys/fs/pstore’: Permission denied
 find: ‘/sys/fs/bpf’: Permission denied
 bandit6@bandit:~$ cat /var/lib/dpkg/info/bandit7.password
-morbNTDkSW6jIlUc0ymOdMaLnOlFVAaj
+<redacted>
 ```
 
 permission denied가 유일하게 안뜬게 /var/lib/dpkg/info/bandit7.password 다.
@@ -606,7 +606,7 @@ drwxr-xr-x 150 root    root       4096 Apr  3 15:20 ..
 -rw-r-----   1 bandit8 bandit7 4184396 Apr  3 15:18 data.txt
 -rw-r--r--   1 root    root        807 Mar 31  2024 .profile
 bandit7@bandit:~$ grep millionth data.txt 
-millionth       dfwvzFQi4mU0wfNbFOe9RoWskMLg7eEc
+millionth       <redacted>
 ```
 
 grep으로 millionth가 있는 줄을 찾았다.
@@ -627,7 +627,7 @@ drwxr-xr-x 150 root    root     4096 Apr  3 15:20 ..
 -rw-r-----   1 bandit9 bandit8 33033 Apr  3 15:18 data.txt
 -rw-r--r--   1 root    root      807 Mar 31  2024 .profile
 bandit8@bandit:~$ sort data.txt | uniq -u
-4CKMh1JI91bUIZZPXDqGanal4xvAg0JM
+<redacted>
 ```
 
 풀이방법을 고민하던 중 주어진 명령어 힌트를 통해 명령어들 사용법을 보던 중 uniq명령어 설명에서 다음과 같은 내용을 발견했다.
@@ -669,7 +669,7 @@ V?L=
 ========== is
 =Dvq
 =n/N
-========== FGUW5ilLVJrxX9kMYMmlN4MgbpfMiqey
+========== <redacted>
 zX]%=
 ]\{=
 ```
@@ -692,7 +692,7 @@ drwxr-xr-x 150 root     root     4096 Apr  3 15:20 ..
 -rw-r-----   1 bandit11 bandit10   69 Apr  3 15:17 data.txt
 -rw-r--r--   1 root     root      807 Mar 31  2024 .profile
 bandit10@bandit:~$ base64 -d data.txt 
-The password is dtR173fZKb0RRsDFSGsg2RWnpNVj3qRr
+The password is <redacted>
 ```
 
 ![image.png](bandit/image%2013.png)
@@ -715,7 +715,7 @@ drwxr-xr-x 150 root     root     4096 Apr  3 15:20 ..
 -rw-r-----   1 bandit12 bandit11   49 Apr  3 15:17 data.txt
 -rw-r--r--   1 root     root      807 Mar 31  2024 .profile
 bandit11@bandit:~$ cat data.txt 
-Gur cnffjbeq vf 7k16JArUVv5LxVuJfsSVdbbtaHGlw9D4
+Gur cnffjbeq vf <redacted>
 ```
 
 설명대로 13칸씩 치환된것같다.
@@ -728,7 +728,7 @@ A+13=N이니까
 
 ```bash
 bandit11@bandit:~$ cat data.txt | tr 'A-Za-z' 'N-ZA-Mn-za-m'
-The password is 7x16WNeHIi5YkIhWsfFIqoognUTyj9Q4
+The password is <redacted>
 ```
 
 다음과 같이 tr을 사용하면 된다.
@@ -838,7 +838,7 @@ bandit12@bandit:/tmp/tmp.7vZuBJsuwi$ gzip -d file.gz
 bandit12@bandit:/tmp/tmp.7vZuBJsuwi$ file file
 file: ASCII text
 bandit12@bandit:/tmp/tmp.7vZuBJsuwi$ cat file 
-The password is FO5dwFsc0cbaIiH0h8J2eUks2vdTDwAn
+The password is <redacted>
 bandit12@bandit:/tmp/tmp.7vZuBJsuwi$ 
 ```
 
@@ -967,7 +967,7 @@ axii@fedora:~/bandit$ chmod 600 sshkey.private
 axii@fedora:~/bandit$ ssh -i sshkey.private bandit14@bandit.labs.overthewire.org -p 2220
 
 bandit14@bandit:~$ cat /etc/bandit_pass/bandit14
-MU4VWeTyJk8ROof1qqmcBPaLh7lDCPvS
+<redacted>
 bandit14@bandit:~$ 
 ```
 
@@ -987,9 +987,9 @@ drwxr-xr-x 150 root root 4096 Apr  3 15:20 ..
 -rw-r--r--   1 root root  807 Mar 31  2024 .profile
 drwxr-xr-x   2 root root 4096 Apr  3 15:17 .ssh
 bandit14@bandit:~$ nc localhost 30000
-MU4VWeTyJk8ROof1qqmcBPaLh7lDCPvS
+<redacted>
 Correct!
-8xCjnmgoKbGLhHFAZlGE5Tmu4M2tKJQo
+<redacted>
 ```
 
 설명대로 로컬호스트 30000번 포트에 접속한 후 Level 14 비밀번호를 제출했다.
@@ -1002,7 +1002,7 @@ Correct!
 axii@fedora:~/bandit$ ssh bandit15@bandit.labs.overthewire.org -p 2220
                        
 bandit15@bandit:~$ nc localhost 30001
-8xCjnmgoKbGLhHFAZlGE5Tmu4M2tKJQo
+<redacted>
 ```
 
 이번엔 당연히?도 nc로는 다음 pw를 주지 않는다.
@@ -1145,9 +1145,9 @@ SSL-Session:
     Max Early Data: 0
 ---
 read R BLOCK
-8xCjnmgoKbGLhHFAZlGE5Tmu4M2tKJQo
+<redacted>
 Correct!
-kSkvUpMQ7lBYyCM4GBPvCvT1BfWRy0Dx
+<redacted>
 
 closed
 bandit15@bandit:~$ 
@@ -1179,7 +1179,7 @@ PORT      STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 0.05 seconds
 ```
 
-16번 비밀번호가 kSkvUpMQ7lBYyCM4GBPvCvT1BfWRy0Dx
+16번 비밀번호가 <redacted>
 
 ```bash
 bandit16@bandit:~$ openssl s_client -connect localhost:31046
@@ -1336,7 +1336,7 @@ SSL-Session:
     Max Early Data: 0
 ---
 read R BLOCK
-kSkvUpMQ7lBYyCM4GBPvCvT1BfWRy0Dx
+<redacted>
 KEYUPDATE
 closed
 bandit16@bandit:~$ 
@@ -1500,31 +1500,7 @@ depth=0 CN = SnakeOil
 verify return:1
 Correct!
 -----BEGIN RSA PRIVATE KEY-----
-MIIEogIBAAKCAQEAvmOkuifmMg6HL2YPIOjon6iWfbp7c3jx34YkYWqUH57SUdyJ
-imZzeyGC0gtZPGujUSxiJSWI/oTqexh+cAMTSMlOJf7+BrJObArnxd9Y7YT2bRPQ
-Ja6Lzb558YW3FZl87ORiO+rW4LCDCNd2lUvLE/GL2GWyuKN0K5iCd5TbtJzEkQTu
-DSt2mcNn4rhAL+JFr56o4T6z8WWAW18BR6yGrMq7Q/kALHYW3OekePQAzL0VUYbW
-JGTi65CxbCnzc/w4+mqQyvmzpWtMAzJTzAzQxNbkR2MBGySxDLrjg0LWN6sK7wNX
-x0YVztz/zbIkPjfkU1jHS+9EbVNj+D1XFOJuaQIDAQABAoIBABagpxpM1aoLWfvD
-KHcj10nqcoBc4oE11aFYQwik7xfW+24pRNuDE6SFthOar69jp5RlLwD1NhPx3iBl
-J9nOM8OJ0VToum43UOS8YxF8WwhXriYGnc1sskbwpXOUDc9uX4+UESzH22P29ovd
-d8WErY0gPxun8pbJLmxkAtWNhpMvfe0050vk9TL5wqbu9AlbssgTcCXkMQnPw9nC
-YNN6DDP2lbcBrvgT9YCNL6C+ZKufD52yOQ9qOkwFTEQpjtF4uNtJom+asvlpmS8A
-vLY9r60wYSvmZhNqBUrj7lyCtXMIu1kkd4w7F77k+DjHoAXyxcUp1DGL51sOmama
-+TOWWgECgYEA8JtPxP0GRJ+IQkX262jM3dEIkza8ky5moIwUqYdsx0NxHgRRhORT
-8c8hAuRBb2G82so8vUHk/fur85OEfc9TncnCY2crpoqsghifKLxrLgtT+qDpfZnx
-SatLdt8GfQ85yA7hnWWJ2MxF3NaeSDm75Lsm+tBbAiyc9P2jGRNtMSkCgYEAypHd
-HCctNi/FwjulhttFx/rHYKhLidZDFYeiE/v45bN4yFm8x7R/b0iE7KaszX+Exdvt
-SghaTdcG0Knyw1bpJVyusavPzpaJMjdJ6tcFhVAbAjm7enCIvGCSx+X3l5SiWg0A
-R57hJglezIiVjv3aGwHwvlZvtszK6zV6oXFAu0ECgYAbjo46T4hyP5tJi93V5HDi
-Ttiek7xRVxUl+iU7rWkGAXFpMLFteQEsRr7PJ/lemmEY5eTDAFMLy9FL2m9oQWCg
-R8VdwSk8r9FGLS+9aKcV5PI/WEKlwgXinB3OhYimtiG2Cg5JCqIZFHxD6MjEGOiu
-L8ktHMPvodBwNsSBULpG0QKBgBAplTfC1HOnWiMGOU3KPwYWt0O6CdTkmJOmL8Ni
-blh9elyZ9FsGxsgtRBXRsqXuz7wtsQAgLHxbdLq/ZJQ7YfzOKU4ZxEnabvXnvWkU
-YOdjHdSOoKvDQNWu6ucyLRAWFuISeXw9a/9p7ftpxm0TSgyvmfLF2MIAEwyzRqaM
-77pBAoGAMmjmIJdjp+Ez8duyn3ieo36yrttF5NSsJLAbxFpdlc1gvtGCWW+9Cq0b
-dxviW8+TFVEBl1O4f7HVm6EpTscdDxU+bCXWkfjuRb7Dy9GOtt9JPsX8MBTakzh3
-vBgsyi/sN3RqRBcGU40fOoZyfAMT8s1m/uYv52O6IgeuZ/ujbjY=
+<redacted private key>
 -----END RSA PRIVATE KEY-----
 ```
 
@@ -1556,14 +1532,14 @@ drwxr-xr-x 150 root     root     4096 Apr  3 15:20 ..
 drwxr-xr-x   2 root     root     4096 Apr  3 15:17 .ssh
 bandit17@bandit:~$ diff passwords.new passwords.old
 42c42
-< x2gLTTjFwMOhQ8oWNbMN362QKxfRqGlO
+< <redacted>
 ---
-> 390zFj2NETFVZkqYw8UEFdN6h40oGVtT
+> <redacted>
 ```
 
 diff 명령어로 변경된 부분을 확인해보자.
 
-따라서 비밀번호는 x2gLTTjFwMOhQ8oWNbMN362QKxfRqGlO 이다.
+따라서 비밀번호는 <redacted> 이다.
 
 # Level 18
 
@@ -1594,7 +1570,7 @@ backend: gibson-0
 bandit18@bandit.labs.overthewire.org's password: 
 readme                                                                                                                                             100%   33     0.0KB/s   00:01    
 axii@fedora:~/bandit$ cat readme
-cGWpMaKXVwDUNgPAVJbWYuGHVn9zl3j8
+<redacted>
 ```
 
 scp로 다운로드해왔다.
@@ -1624,7 +1600,7 @@ bandit20
 bandit19@bandit:~$ cat /etc/bandit_pass/bandit20
 cat: /etc/bandit_pass/bandit20: Permission denied
 bandit19@bandit:~$ ./bandit20-do cat /etc/bandit_pass/bandit20
-0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO
+<redacted>
 ```
 
 ./bandit20-do [명령어]를 하면 bandit20 권한으로 명령어를 실행해주는 파일같다.
@@ -1646,25 +1622,25 @@ drwxr-xr-x 150 root     root      4096 Apr  3 15:20 ..
 -rwsr-x---   1 bandit21 bandit20 15612 Apr  3 15:17 suconnect
 bandit20@bandit:~$ file suconnect 
 suconnect: setuid ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, BuildID[sha1]=5ebb1e531d5117dae7d435f244411b35d765672f, for GNU/Linux 3.2.0, not stripped
-bandit20@bandit:~$ ./suconnect 0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO
+bandit20@bandit:~$ ./suconnect <redacted>
 getaddrinfo: Servname not supported for ai_socktype
-bandit20@bandit:~$ echo '0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO' | nc -l -p 11111
+bandit20@bandit:~$ echo '<redacted>' | nc -l -p 11111
 ^Z
-[1]+  Stopped                 echo '0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO' | nc -l -p 11111
+[1]+  Stopped                 echo '<redacted>' | nc -l -p 11111
 bandit20@bandit:~$ ./suconnect 11111                                       
 ^C
 bandit20@bandit:~$ bg
-[1]+ echo '0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO' | nc -l -p 11111 &
+[1]+ echo '<redacted>' | nc -l -p 11111 &
 bandit20@bandit:~$ ./suconnect 11111
 Could not connect
-[1]+  Done                    echo '0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO' | nc -l -p 11111
-bandit20@bandit:~$ echo '0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO' | nc -l -p 22222 &
+[1]+  Done                    echo '<redacted>' | nc -l -p 11111
+bandit20@bandit:~$ echo '<redacted>' | nc -l -p 22222 &
 [1] 27
 bandit20@bandit:~$ ./suconnect 22222                                         
-Read: 0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO
+Read: <redacted>
 Password matches, sending next password
-EeoULMCra2q0dSkYj561DX7s1CpBuOBt
-[1]+  Done                    echo '0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO' | nc -l -p 22222
+<redacted>
+[1]+  Done                    echo '<redacted>' | nc -l -p 22222
 bandit20@bandit:~$ 
 ```
 
@@ -1702,7 +1678,7 @@ bandit21@bandit:/etc/cron.d$ cat /usr/bin/cronjob_bandit22.sh
 chmod 644 /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
 cat /etc/bandit_pass/bandit22 > /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
 bandit21@bandit:/etc/cron.d$ cat /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
-tRae0UfB9v0UzbCdn9cY0gQnds9GF58Q
+<redacted>
 bandit21@bandit:/etc/cron.d$ 
 ```
 
@@ -1754,7 +1730,7 @@ cat /etc/bandit_pass/$myname > /tmp/$mytarget
 bandit22@bandit:/etc/cron.d$ echo "I am user bandit23" | md5sum | cut -d ' ' -f 1
 8ca319486bfbbc3663ea0fbe81326349
 bandit22@bandit:/etc/cron.d$ cat /tmp/8ca319486bfbbc3663ea0fbe81326349
-0Zf11ioIjMVN551jX3CmStKLYqjk54Ga
+<redacted>
 ```
 
 해당 파일을 찾아서 읽는다.
@@ -1858,7 +1834,7 @@ bandit23@bandit:/etc/cron.d$ cp /tmp/tmp.JtGkrKrMZL/sol24.sh /etc/bandit_pass/ba
 cp: cannot create regular file '/etc/bandit_pass/bandit24': Operation not permitted
 bandit23@bandit:/etc/cron.d$ cp /tmp/tmp.JtGkrKrMZL/sol24.sh /var/spool/bandit24/foo  
 bandit23@bandit:/etc/cron.d$ cat /tmp/tmp.JtGkrKrMZL/pw24 
-gb8KRRCsshuZXI0tUuR6ypOFjiZbf3G8
+<redacted>
 ```
 
 # Level 24
@@ -1870,9 +1846,9 @@ axii@fedora:~/bandit$ ssh bandit24@bandit.labs.overthewire.org -p 2220
 
 bandit24@bandit:~$ nc localhost 30002
 I am the pincode checker for user bandit25. Please enter the password for user bandit24 and the secret pincode on a single line, separated by a space.
-gb8KRRCsshuZXI0tUuR6ypOFjiZbf3G8 0001
+<redacted> 0001
 Wrong! Please enter the correct current password and pincode. Try again.
-gb8KRRCsshuZXI0tUuR6ypOFjiZbf3G8 0002
+<redacted> 0002
 Wrong! Please enter the correct current password and pincode. Try again.
 ```
 
@@ -1883,7 +1859,7 @@ from pwn import *
 p=remote("localhost", 30002)
 
 for i in range(10000):
-    p.sendline(f"gb8KRRCsshuZXI0tUuR6ypOFjiZbf3G8 {i:04d}".encode())
+    p.sendline(f"<redacted> {i:04d}".encode())
 
 for l in p.recvall().decode().splitlines():
     if "Wrong" not in l:
@@ -2056,7 +2032,7 @@ Terminal features will not be available.  Consider setting TERM variable to your
 [*] Closed connection to localhost port 30002
 I am the pincode checker for user bandit25. Please enter the password for user bandit24 and the secret pincode on a single line, separated by a space.
 Correct!
-The password of user bandit25 is iCi86ttT4KSNe1armKiwbQNmB3YJP3q4
+The password of user bandit25 is <redacted>
 
 bandit24@bandit:/tmp/tmp.zyqWWpDiAK$ 
 ```
