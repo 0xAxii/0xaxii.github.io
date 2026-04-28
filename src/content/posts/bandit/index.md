@@ -1179,7 +1179,7 @@ PORT      STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 0.05 seconds
 ```
 
-16번 비밀번호가 <redacted>
+16번 비밀번호가 `<redacted>`
 
 ```bash
 bandit16@bandit:~$ openssl s_client -connect localhost:31046
@@ -1539,7 +1539,7 @@ bandit17@bandit:~$ diff passwords.new passwords.old
 
 diff 명령어로 변경된 부분을 확인해보자.
 
-따라서 비밀번호는 <redacted> 이다.
+따라서 비밀번호는 `<redacted>` 이다.
 
 # Level 18
 
