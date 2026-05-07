@@ -6,8 +6,6 @@ category: "CTF/Wargame"
 tags: ["Web3", "Ethernaut", "Writeup"]
 ---
 
-Ethernaut 1번부터 40번까지의 풀이를 문제별로 나눠 정리했다. 목록에서는 이 글 하나만 보이도록 두고, 각 문제 풀이는 아래 링크에서 바로 볼 수 있게 했다.
-
 ## 문제 목록
 
 | No | 문제 |
