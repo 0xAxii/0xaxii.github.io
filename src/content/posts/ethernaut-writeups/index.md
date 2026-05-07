@@ -1,7 +1,7 @@
 ---
 title: "Ethernaut Writeup"
 published: 2026-05-07
-description: "Ethernaut 40개 문제 풀이를 한 곳에서 볼 수 있게 정리했다."
+description: "Ethernaut Level 1부터 Level 40까지 풀이를 정리했다"
 category: "CTF/Wargame"
 tags: ["Web3", "Ethernaut", "Writeup"]
 ---
