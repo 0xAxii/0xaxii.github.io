@@ -49,18 +49,18 @@ contract Reentrance {
 }
 ```
 ## 배경지식
----
+<hr />
 컨트랙트가 아무 calldata 없이 이더를 받으면 `receive()`가 실행된다. 이 문제의 공격 컨트랙트도 이 점을 이용한다.
 문제 컨트랙트의 `withdraw()`는 `msg.sender.call{value: _amount}("")`로 이더를 보낸다. 이때 `msg.sender`가 컨트랙트라면, 그 컨트랙트의 `receive()`가 실행될 수 있다.
 이 `receive()`는 단순히 이더를 받기만 하는 함수일 필요가 없다. 공격자는 `receive()` 안에서 다시 문제 컨트랙트의 `withdraw()`를 호출할 수 있다.
----
+<hr />
 `call`은 low-level call이다. 함수 호출에도 쓰이고, 이더 전송에도 쓰인다.
 ```solidity
 (bool result,) = msg.sender.call{value: _amount}("");
 ```
 여기서는 빈 calldata와 함께 이더를 보내므로, 수신 컨트랙트의 `receive()`가 실행된다. 또 `transfer`와 다르게 남은 gas를 넉넉하게 넘겨줄 수 있어서, 수신 컨트랙트가 다시 외부 호출을 수행하기 쉽다.
 `call` 자체가 항상 취약하다는 뜻은 아니다. 다만 상태 변경보다 외부 호출이 먼저 일어나면 reentrancy attack의 통로가 된다.
----
+<hr />
 reentrancy attack은 외부 컨트랙트로 제어권을 넘긴 뒤, 아직 상태가 정리되지 않은 함수가 다시 호출되는 공격이다.
 A를 취약한 은행 컨트랙트, B를 공격 컨트랙트라고 하자.
 1. B가 A에 출금을 요청한다.
@@ -70,7 +70,7 @@ A를 취약한 은행 컨트랙트, B를 공격 컨트랙트라고 하자.
 5. A의 내부 잔액이 아직 차감되지 않았다면, 같은 잔액으로 다시 출금이 가능하다.
 돈을 먼저 보내고 장부를 나중에 고치면, 같은 잔액을 기준으로 출금을 여러 번 반복할 수 있다.
 ## 문제 코드 분석
----
+<hr />
 먼저 `balances`와 `donate()`를 보자.
 ```solidity
 mapping(address => uint256) public balances;
@@ -81,7 +81,7 @@ function donate(address _to) public payable {
 ```
 `balances`는 각 주소가 예치한 금액을 기록한다. `donate()`는 `_to` 주소의 잔액을 `msg.value`만큼 증가시킨다.
 공격자는 여기서 `_to`를 `address(this)`, 즉 공격 컨트랙트 주소로 지정한다. 그래야 이후 문제 컨트랙트가 보는 `balances[msg.sender]`가 공격 컨트랙트의 잔액이 된다.
----
+<hr />
 이제 `withdraw()`의 검증을 보자.
 ```solidity
 function withdraw(uint256 _amount) public {
@@ -89,7 +89,7 @@ function withdraw(uint256 _amount) public {
 ```
 `withdraw()`는 먼저 `balances[msg.sender]`가 `_amount` 이상인지 확인한다. 여기까지는 정상적인 출금 로직처럼 보인다.
 하지만 이 검증은 함수 진입 시점의 장부 잔액만 본다. 출금 중간에 다시 `withdraw()`가 호출되면, 이전 호출의 잔액 차감이 아직 끝나지 않았기 때문에 같은 조건을 다시 통과할 수 있다.
----
+<hr />
 외부 호출은 여기서 일어난다.
 ```solidity
 (bool result,) = msg.sender.call{value: _amount}("");
@@ -100,7 +100,7 @@ if (result) {
 이 부분에서 문제 컨트랙트는 `msg.sender`에게 이더를 보낸다. `msg.sender`가 공격 컨트랙트라면 공격 컨트랙트의 `receive()`가 실행된다.
 즉, `withdraw()`는 아직 실행 중인데 제어권이 공격 컨트랙트로 넘어간다. 공격 컨트랙트는 이 시점에 다시 `withdraw()`를 호출할 수 있다.
 `if (result) { _amount; }`는 실질적으로 아무 상태도 바꾸지 않는다. `result`를 확인하고 있지만, 성공했을 때 해야 할 장부 정리는 이 블록 안에 없다.
----
+<hr />
 상태 업데이트는 마지막에 온다.
 ```solidity
 balances[msg.sender] -= _amount;

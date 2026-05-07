@@ -62,15 +62,15 @@ contract UniqueNFT is ERC721, ReentrancyGuard {
 }
 ```
 ## 배경지식
----
+<hr />
 ERC721에서 컨트랙트 주소로 NFT를 보내면 수신자가 NFT를 받을 수 있는 컨트랙트인지 확인해야 한다. 이때 수신자에게 `onERC721Received`를 호출하고, 수신자가 정해진 selector를 반환하면 전송을 허용한다.
 보통은 상태를 먼저 바꾸고 콜백을 호출한다. 그래야 콜백 중에 다시 들어와도 이미 바뀐 `balanceOf`, `ownerOf` 같은 상태를 기준으로 검사가 된다. 반대로 외부 호출이 상태 변경보다 먼저 일어나면 콜백에서 아직 바뀌지 않은 상태를 이용할 수 있다.
----
+<hr />
 일반 EOA는 코드가 없으므로 `onERC721Received` 콜백을 받을 수 없다. 일반 컨트랙트는 코드가 있지만 `tx.origin == msg.sender`를 만족할 수 없다.
 EIP-7702를 쓰면 EOA가 특정 구현 컨트랙트로 실행을 위임할 수 있다. 계정 주소는 그대로 EOA 주소지만, 그 주소로 호출이 오면 위임된 코드가 실행된다. target 입장에서는 `msg.sender`가 player EOA이고 `tx.origin`도 player EOA인데, 동시에 `msg.sender` 주소에는 콜백 코드가 붙어 있는 상태가 된다.
 이 문제는 EOA와 컨트랙트를 나눠서 처리하려고 했지만, delegated EOA가 그 경계를 무너뜨린다.
 ## 문제 코드 분석
----
+<hr />
 먼저 민팅 경로를 보자.
 ```solidity
 function mintNFTSmartContract() external payable nonReentrant returns(uint256 mintedNFT) {
@@ -85,7 +85,7 @@ function mintNFTEOA() external returns(uint256 mintedNFT) {
 ```
 `mintNFTSmartContract`는 1 ether를 요구하고 `nonReentrant`가 붙어 있다. 컨트랙트 경로에서 callback reentrancy를 시도하면 이 함수에서는 막힌다.
 반면 `mintNFTEOA`는 `tx.origin == msg.sender`만 본다. 일반적인 컨트랙트 호출은 이 조건을 만족하지 못하지만, EIP-7702로 player EOA에 코드를 붙이면 target에는 여전히 player EOA가 직접 호출한 것처럼 보인다.
----
+<hr />
 one NFT 제한은 여기서 걸린다.
 ```solidity
 function _mintNFT() private returns(uint256) {
@@ -99,7 +99,7 @@ function _mintNFT() private returns(uint256) {
 one NFT 제한은 `balanceOf(msg.sender) == 0`이다. 문제는 이 검사를 통과한 뒤 바로 `_mint`하지 않고, 먼저 `ERC721Utils.checkOnERC721Received`로 외부 호출을 한다는 점이다.
 이 호출이 player EOA의 delegated code에 도달하면 `onERC721Received`가 실행된다. 이 순간 아직 `_mint`가 실행되지 않았으므로 player의 balance는 여전히 0이다. 따라서 콜백 안에서 다시 `mintNFTEOA`를 호출하면 같은 검사를 다시 통과한다.
 첫 번째 `mintNFTEOA`는 balance 0을 확인하고 콜백을 호출한다. 콜백에서 두 번째 `mintNFTEOA`를 호출해도 아직 첫 번째 NFT가 mint되지 않았으므로 balance는 0이다. 두 번째 호출이 먼저 `_mint`를 끝내고, 이후 첫 번째 호출이 이어서 `_mint`를 끝내면 같은 주소가 NFT 2개를 갖게 된다.
----
+<hr />
 전송은 별도로 막혀 있다.
 ```solidity
 function _update(address to, uint256 _tokenId, address auth) internal override returns (address) {

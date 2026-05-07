@@ -147,11 +147,11 @@ contract DoubleEntryPoint is ERC20("DoubleEntryPointToken", "DET"), DelegateERC2
 }
 ```
 ## 배경지식
----
+<hr />
 보통 ERC20 토큰은 하나의 컨트랙트 주소를 진입점으로 가진다. 사용자는 그 주소의 `transfer`, `approve`, `balanceOf`를 호출하고, 다른 프로토콜도 그 주소를 기준으로 토큰을 식별한다.
 그런데 이 문제에서는 LGT와 DET가 연결되어 있다. `LegacyToken.transfer`를 호출했는데 실제 잔액 이동은 `DoubleEntryPoint.delegateTransfer`에서 일어난다. LGT 주소로 들어온 호출이 DET 잔액 이동으로 이어지는 구조다.
 이런 구조에서는 `token != underlying`처럼 주소 하나만 비교하는 방어가 약해진다. 호출한 토큰 주소는 LGT지만, 실제로 빠져나가는 자산은 DET일 수 있기 때문이다.
----
+<hr />
 `DoubleEntryPoint.delegateTransfer`가 호출될 때 `fortaNotify`는 다음처럼 `msg.data`를 Forta 봇에게 넘긴다.
 ```solidity
 forta.notify(player, msg.data);
@@ -165,11 +165,11 @@ forta.notify(player, msg.data);
                         origSender
 ```
 봇에서는 `msgData[4:]`를 `abi.decode`하면 `to`, `value`, `origSender`를 꺼낼 수 있다. 이번 문제에서 봐야 할 값은 `origSender`다.
----
+<hr />
 Forta는 취약한 코드를 직접 고치는 장치가 아니라 실행 중인 트랜잭션을 감시하는 장치다. 사용자는 자신의 `detection bot`을 등록하고, DET의 `delegateTransfer`는 실행 전에 봇에게 calldata를 넘긴다.
 봇이 `raiseAlert`를 호출하면 `botRaisedAlerts`가 증가한다. 이후 `fortaNotify`는 알림 수가 증가했는지 확인하고, 증가했다면 전체 전송을 revert한다.
 ## 문제 코드 분석
----
+<hr />
 먼저 `CryptoVault`의 sweep 조건을 보자.
 ```solidity
 function sweepToken(IERC20 token) public {
@@ -180,7 +180,7 @@ function sweepToken(IERC20 token) public {
 `CryptoVault`는 `underlying`으로 등록된 토큰만 sweep하지 못하게 막는다. 여기서 `underlying`은 DET 주소다.
 겉으로 보면 DET를 직접 넘겨 `sweepToken(DET)`를 호출하면 `require`에서 막힌다. 하지만 `sweepToken(LGT)`를 호출하면 `token`은 LGT 주소이므로 `token != underlying` 조건을 통과한다.
 문제는 이 비교가 실제로 이동할 토큰을 확인하지 않는다는 점이다. `token.transfer(...)`가 LGT의 평범한 전송으로 끝난다면 괜찮지만, LGT는 DET로 위임될 수 있다.
----
+<hr />
 이제 `LegacyToken`의 delegate 흐름을 보자.
 ```solidity
 function transfer(address to, uint256 value) public override returns (bool) {
@@ -200,7 +200,7 @@ CryptoVault.sweepToken(LGT)
 -> DET.delegateTransfer(sweptTokensRecipient, value, CryptoVault)
 ```
 주소 비교는 LGT 기준으로 통과했지만, 실제로는 DET의 `delegateTransfer`가 위험하다.
----
+<hr />
 다음으로 `DoubleEntryPoint`의 실제 전송을 보자.
 ```solidity
 function delegateTransfer(address to, uint256 value, address origSender)
@@ -217,7 +217,7 @@ function delegateTransfer(address to, uint256 value, address origSender)
 `delegateTransfer`는 `onlyDelegateFrom` 때문에 LGT 컨트랙트에서 온 호출만 받는다. 이 조건은 공격을 막기보다는 LGT를 통한 우회 경로를 공식화한다.
 실제 전송은 `_transfer(origSender, to, value)`다. `origSender`가 `CryptoVault`라면 DET 컨트랙트 입장에서는 `CryptoVault`가 가진 DET를 `sweptTokensRecipient`로 보내는 전송이 된다.
 `CryptoVault`는 `token` 주소만 보고 sweep 가능 여부를 판단한다. LGT라는 다른 진입점으로 들어왔지만 DET의 잔액이 이동하는 구조를 고려하지 못한 것이다.
----
+<hr />
 마지막으로 Forta 알림 지점을 보자.
 ```solidity
 modifier fortaNotify() {

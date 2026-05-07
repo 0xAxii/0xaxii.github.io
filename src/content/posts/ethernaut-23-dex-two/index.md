@@ -76,20 +76,20 @@ contract SwappableTokenTwo is ERC20 {
 }
 ```
 ## 배경지식
----
+<hr />
 이 문제의 DEX는 실제 AMM처럼 불변식을 유지하지 않는다. 단순히 컨트랙트가 가진 `from` 토큰과 `to` 토큰의 현재 잔액 비율만 보고 받을 수량을 계산한다.
 $$
 swapAmount = amount \times \frac{balance(to)}{balance(from)}
 $$
 `from` 토큰의 DEX 잔액이 작고 `to` 토큰의 DEX 잔액이 크면, 아주 적은 `from` 토큰으로 많은 `to` 토큰을 받을 수 있다.
----
+<hr />
 `IERC20(from)`처럼 주소를 ERC20 인터페이스로 캐스팅하면, 컨트랙트는 그 주소가 정말 `token1` 또는 `token2`인지 알 수 없다. 해당 주소에 `balanceOf`, `transferFrom`, `approve` 같은 함수가 있고 정상적으로 동작하면 ERC20 토큰처럼 사용할 수 있다.
 즉 `swap`에서 `from`과 `to`를 검증하지 않으면 공격자가 직접 만든 토큰도 가격 공식에 들어갈 수 있다.
----
+<hr />
 `swap`은 마지막에 `IERC20(from).transferFrom(msg.sender, address(this), amount)`를 호출한다. 이 호출의 실제 실행자는 `DexTwo` 컨트랙트이므로, `DexTwo`가 `msg.sender`의 `from` 토큰을 가져갈 수 있도록 allowance가 필요하다.
 공격 컨트랙트가 직접 만든 토큰을 `from`으로 사용할 경우, 공격 토큰 컨트랙트 안에서 `DexTwo`에게 allowance를 미리 주면 된다.
 ## 문제 코드 분석
----
+<hr />
 이전 Dex의 `swap`에는 다음 조건이 있었다.
 ```solidity
 require((from == token1 && to == token2) || (from == token2 && to == token1), "Invalid tokens");
@@ -106,7 +106,7 @@ function swap(address from, address to, uint256 amount) public {
 ```
 여기서 확인하는 것은 `msg.sender`가 `from` 토큰을 `amount` 이상 가지고 있는지뿐이다. `from`이 `token1`이나 `token2`인지, `to`가 둘 중 하나인지 확인하지 않는다.
 공격자는 직접 만든 `T3` 토큰을 `from`으로 넣고, `to`에는 빼내고 싶은 `token1` 또는 `token2`를 넣을 수 있다.
----
+<hr />
 이제 가격 계산과 분모 조작을 보자.
 ```solidity
 function getSwapAmount(address from, address to, uint256 amount) public view returns (uint256) {
@@ -123,7 +123,7 @@ $$
 $$
 2 \times \frac{100}{2} = 100
 $$
----
+<hr />
 마지막으로 외부 토큰 전송 흐름을 보자.
 ```solidity
 IERC20(from).transferFrom(msg.sender, address(this), amount);

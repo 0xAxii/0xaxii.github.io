@@ -48,21 +48,21 @@ contract GatekeeperTwo {
 }
 ```
 ## 배경지식
----
+<hr />
 `msg.sender`는 현재 함수를 직접 호출한 주소이고, `tx.origin`은 트랜잭션을 처음 발생시킨 EOA 주소다. EOA가 컨트랙트 A를 호출하고, 컨트랙트 A가 다시 컨트랙트 B를 호출한다고 하자. 이때 B 입장에서 `msg.sender`는 A이고, `tx.origin`은 처음 트랜잭션을 보낸 EOA다.
 중간에 컨트랙트를 하나 끼워 넣으면 `msg.sender != tx.origin` 조건을 만족시킬 수 있다. 13번 Gatekeeper One의 첫 번째 gate와 같은 구조다.
----
+<hr />
 `extcodesize(addr)`는 특정 주소에 저장된 런타임 코드의 크기를 반환하는 EVM 명령어다. 일반적으로 이미 배포된 컨트랙트 주소에 대해 실행하면 코드 크기가 0보다 크다.
 그런데 컨트랙트가 배포되는 과정에서는 먼저 creation code가 실행되고, 그 결과로 나온 runtime code가 배포 주소에 저장된다. `constructor`는 이 creation code 실행 중에 동작한다. 즉, `constructor`가 실행되는 동안에는 아직 현재 컨트랙트의 runtime code가 주소에 저장되지 않았다.
 그래서 생성자 안에서 다른 컨트랙트를 호출하면, 호출을 받는 쪽에서 `extcodesize(caller())`를 검사해도 공격 컨트랙트의 코드 크기가 0으로 나온다. 이 조건으로 `gateTwo`를 통과할 수 있다.
----
+<hr />
 XOR는 두 비트가 다를 때만 1을 반환하는 비트 연산이다. 같은 값을 두 번 적용하면 원래 값으로 돌아오는 성질이 있다.
 $$
 A \oplus B = C \quad \Rightarrow \quad B = A \oplus C
 $$
 문제에서는 `A ^ _gateKey == type(uint64).max`가 되어야 하므로, `_gateKey`는 `A ^ type(uint64).max`로 만들면 된다.
 ## 문제 코드 분석
----
+<hr />
 첫 번째 gate부터 보자.
 ```solidity
 modifier gateOne() {
@@ -72,7 +72,7 @@ modifier gateOne() {
 ```
 `enter`를 EOA가 직접 호출하면 `msg.sender`와 `tx.origin`이 같은 주소가 되므로 revert된다. 공격 컨트랙트를 하나 배포하고 그 컨트랙트가 `enter`를 호출하게 만들면, `msg.sender`는 공격 컨트랙트 주소가 되고 `tx.origin`은 내 EOA가 된다.
 첫 번째 조건은 공격 컨트랙트를 통해 호출하는 것으로 통과할 수 있다.
----
+<hr />
 두 번째 gate는 `extcodesize`를 본다.
 ```solidity
 modifier gateTwo() {
@@ -86,7 +86,7 @@ modifier gateTwo() {
 ```
 여기서 `caller()`는 현재 `GatekeeperTwo.enter`를 호출한 주소다. 공격 컨트랙트가 이미 배포된 뒤에 `enter`를 호출하면 `extcodesize(caller())`는 공격 컨트랙트의 runtime code 크기를 반환하므로 0이 아니다.
 하지만 공격 컨트랙트의 `constructor` 안에서 `enter`를 호출하면 상황이 달라진다. 생성자 실행 중에는 공격 컨트랙트의 runtime code가 아직 배포 주소에 저장되지 않았기 때문에 `extcodesize(caller()) == 0`이 된다. 따라서 `enter` 호출을 생성자 안에 넣어야 한다.
----
+<hr />
 세 번째 gate는 XOR 조건이다.
 ```solidity
 modifier gateThree(bytes8 _gateKey) {

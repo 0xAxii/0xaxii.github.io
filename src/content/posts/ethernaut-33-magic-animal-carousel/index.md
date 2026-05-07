@@ -70,14 +70,14 @@ contract MagicAnimalCarousel {
 }
 ```
 ## 배경지식
----
+<hr />
 `carousel`는 `mapping(uint256 => uint256)`이지만, 실제로는 하나의 `uint256` 안에 세 필드를 직접 넣어 쓴다.
 ```plain text
 | animal: 80 bits | nextCrateId: 16 bits | owner: 160 bits |
 |   상위 10 bytes  |       2 bytes        |    하위 20 bytes |
 ```
 마스크도 이 구조에 맞춰져 있다. `OWNER_MASK`는 하위 160비트를, `NEXT_ID_MASK`는 그 위의 16비트를, `ANIMAL_MASK`는 최상위 80비트를 가리킨다. Solidity에서 `<< 160 + 16`은 `<< (160 + 16)`으로 계산되므로 `ANIMAL_MASK`는 176비트만큼 왼쪽으로 이동한 값이다.
----
+<hr />
 `encodeAnimalName`은 최대 12바이트 문자열을 `bytes32`의 상위 바이트에 넣고 160비트 오른쪽으로 민다.
 ```solidity
 return uint256(bytes32(abi.encodePacked(animalName)) >> 160);
@@ -85,14 +85,14 @@ return uint256(bytes32(abi.encodePacked(animalName)) >> 160);
 결과적으로 반환값은 최대 12바이트, 즉 96비트다. 문제는 동물 이름 필드가 10바이트, 즉 80비트만 준비되어 있다는 점이다.
 `setAnimalAndSpin`은 `encodeAnimalName(animal) >> 16`을 사용해서 하위 2바이트를 버린다. 그래서 12바이트 입력이 와도 앞의 10바이트만 동물 이름 필드에 들어간다.
 반면 `changeAnimal`은 `encodeAnimalName(animal)`을 그대로 `<< 160` 한다. 12바이트 값 전체가 올라가므로 앞 10바이트는 `animal` 필드에 들어가고, 뒤 2바이트는 `nextCrateId` 필드까지 침범한다.
----
+<hr />
 `setAnimalAndSpin`은 새 동물을 저장할 때 단순히 기존 동물 필드를 지우고 대입하지 않는다.
 ```solidity
 (carousel[nextCrateId] & ~NEXT_ID_MASK) ^ (encodedAnimal << 160 + 16)
 ```
 여기서는 `NEXT_ID_MASK`만 지운다. 기존 crate에 이미 동물 값이 있으면 그 값은 남아 있고, 새 동물 값과 XOR된다. 빈 crate라면 `0 ^ x = x`라서 정상 저장처럼 보이지만, 비어 있지 않은 crate라면 결과가 입력값과 달라질 수 있다.
 ## 문제 코드 분석
----
+<hr />
 먼저 초기 상태를 보자.
 ```solidity
 uint16 constant public MAX_CAPACITY = type(uint16).max;
@@ -108,7 +108,7 @@ constructor() {
 }
 ```
 배포 직후 `currentCrateId`는 0이다. 생성자에서 `carousel[0]`의 160번째 비트만 켜기 때문에, crate 0의 `nextCrateId`는 1이 된다. 즉 첫 번째 `setAnimalAndSpin` 호출은 crate 1에 동물을 넣도록 시작 상태를 만들어둔 것이다.
----
+<hr />
 이제 `setAnimalAndSpin` 흐름을 보자.
 ```solidity
 function setAnimalAndSpin(string calldata animal) external {
@@ -125,7 +125,7 @@ function setAnimalAndSpin(string calldata animal) external {
 먼저 현재 crate에서 `NEXT_ID_MASK`만 뽑아 다음 crate 번호를 구한다. 그리고 그 다음 crate에 동물 이름, 다음 포인터, 소유자를 저장한다.
 이 코드는 새로 쓸 crate가 비어 있다고 가정한다. `carousel[nextCrateId] & ~NEXT_ID_MASK`는 기존 `nextCrateId` 필드만 지우고 나머지는 유지한다. 여기에 동물 이름을 XOR하므로, 이미 동물 이름이 들어 있던 crate를 다시 쓰게 만들면 저장 결과가 입력한 동물 이름과 달라진다.
 목표는 `setAnimalAndSpin`이 이미 값이 있는 crate로 다시 돌아오게 만드는 것이다.
----
+<hr />
 다음은 `changeAnimal`이다.
 ```solidity
 function changeAnimal(string calldata animal, uint256 crateId) external {

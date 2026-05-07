@@ -49,18 +49,18 @@ contract CoinFlip {
 }
 ```
 ## 배경지식
----
+<hr />
 블록이란 블록체인에 저장되는 하나의 데이터 묶음이다. 하나의 블록 안에는 여러 트랜잭션이 들어갈 수 있다.
 솔리디티에서는 EVM이 제공하는 내장 전역 변수로 현재 실행 중인 트랜잭션의 컨텍스트를 읽을 수 있다. 예를 들어 `block.number`는 현재 트랜잭션이 포함된 블록 번호이고, `msg.sender`는 현재 함수를 호출한 주소다.
 한 트랜잭션 안에서는 같은 전역 변수가 같은 값을 가진다. 공격 컨트랙트가 먼저 `block.number`와 `blockhash`를 읽고, 같은 트랜잭션 안에서 문제 컨트랙트의 `flip`을 호출하면 둘은 같은 블록 컨텍스트를 보게 된다.
----
+<hr />
 `blockhash(uint)`는 인자로 넣은 블록 번호의 해시값을 반환하는 내장 함수다. 이 문제에서는 다음처럼 현재 블록이 아니라 바로 이전 블록의 해시를 사용한다.
 ```solidity
 uint256 blockValue = uint256(blockhash(block.number - 1));
 ```
 현재 트랜잭션이 실행되는 시점에는 `block.number - 1` 블록이 이미 확정되어 있다. 따라서 이 값은 랜덤값이 아니라 누구나 같은 방식으로 계산할 수 있는 공개 값이다.
 이런 값을 난수처럼 쓰면 안 된다. 컨트랙트 내부에서 계산 가능한 값은 공격 컨트랙트 내부에서도 똑같이 계산할 수 있기 때문이다.
----
+<hr />
 `FACTOR`는 다음 값이다.
 ```solidity
 57896044618658097711785492504343953926634992332820282019728792003956564819968
@@ -68,7 +68,7 @@ uint256 blockValue = uint256(blockhash(block.number - 1));
 이 값은 $`2^{255}`$다. `blockValue`는 `uint256`이므로 가능한 범위가 $`0`$부터 $`2^{256}-1`$까지다. 따라서 $`blockValue / 2^{255}`$의 결과는 $`0`$ 또는 $`1`$만 나온다.
 즉 문제 코드는 이전 블록 해시가 $`2^{255}`$보다 크거나 같으면 true, 작으면 false로 동전 면을 정하고 있다.
 ## 문제 코드 분석
----
+<hr />
 먼저 승리 조건을 보자.
 ```solidity
 uint256 public consecutiveWins;
@@ -88,7 +88,7 @@ if (side == _guess) {
     return false;
 }
 ```
----
+<hr />
 이제 동전 면이 어떻게 결정되는지 보자.
 ```solidity
 uint256 blockValue = uint256(blockhash(block.number - 1));
@@ -97,7 +97,7 @@ bool side = coinFlip == 1 ? true : false;
 ```
 동전 면은 사용자의 입력과 무관하게 `blockhash(block.number - 1)`로 결정된다. 그런데 이전 블록 해시는 이미 공개되어 있으므로 공격자는 `side`를 미리 계산할 수 있다.
 결국 문제 컨트랙트가 `side`를 계산하는 로직을 공격 컨트랙트에서도 똑같이 돌리면 된다. 계산된 `side`를 `_guess`로 넣어 `flip`을 호출하면 매번 같은 답을 제출하게 된다.
----
+<hr />
 `lastHash` 체크도 봐야 한다.
 ```solidity
 if (lastHash == blockValue) {

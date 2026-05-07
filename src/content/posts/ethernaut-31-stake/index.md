@@ -70,11 +70,11 @@ contract Stake {
 }
 ```
 ## 배경지식
----
+<hr />
 ERC20에서 `approve(spender, amount)`는 `spender`가 내 토큰을 `amount`만큼 가져갈 수 있도록 허용하는 함수다. 이 값은 `allowance(owner, spender)`로 조회할 수 있다.
 그 다음 `spender`가 `transferFrom(owner, to, amount)`를 호출하면, `owner`의 토큰을 `to`로 옮긴다. 단 `allowance`가 충분하더라도 `owner`의 실제 토큰 잔고가 부족하면 `transferFrom`은 실패한다.
 `allowance`는 권한이고, 실제 잔고는 별도 조건이다. 이 둘을 분리해서 봐야 한다.
----
+<hr />
 Solidity에서 일반적인 인터페이스 호출은 대상 함수가 revert하면 현재 트랜잭션도 같이 revert된다. 반면 저수준 `call`은 호출 성공 여부를 `bool`로 돌려준다.
 ```solidity
 (bool success, bytes memory data) = target.call(payload);
@@ -82,14 +82,14 @@ Solidity에서 일반적인 인터페이스 호출은 대상 함수가 revert하
 여기서 `success == false`여도 직접 `require(success)`를 하지 않으면 현재 함수는 계속 실행된다. 따라서 저수준 `call`을 쓸 때는 반환된 `success`를 반드시 확인해야 한다.
 `StakeWETH`는 `transferFrom`이 실패해도 이미 증가시킨 `totalStaked`와 `UserStake`를 되돌리지 않는다.
 ## 문제 코드 분석
----
+<hr />
 먼저 완료 조건부터 보자.
 1. `address(Stake).balance > 0`
 2. `totalStaked > address(Stake).balance`
 3. `Stakers[msg.sender] == true`
 4. `UserStake[msg.sender] == 0`
 겉으로 보면 컨트랙트의 ETH를 모두 빼야 할 것 같지만, 실제 검증 조건은 ETH 잔고가 0보다 커야 한다. 마지막에는 Stake 컨트랙트에 1 wei라도 남아 있어야 한다.
----
+<hr />
 이제 `StakeETH`와 ETH 잔고를 보자.
 ```solidity
 function StakeETH() public payable {
@@ -101,7 +101,7 @@ function StakeETH() public payable {
 ```
 `StakeETH`는 실제 ETH를 받기 때문에 `address(Stake).balance`와 `totalStaked`가 같이 증가한다. 이 함수만 사용하면 `totalStaked`와 ETH 잔고 사이에 차이를 만들 수 없다.
 하지만 마지막 조건 때문에 Stake 컨트랙트 안에는 ETH가 조금 남아 있어야 한다. 이 ETH를 내 주소로 직접 넣으면 `UserStake[msg.sender]`도 같이 증가해서 나중에 0으로 맞춰야 한다. 그래서 별도의 `tmp` 컨트랙트 주소로 ETH를 넣어두면, 내 주소의 `UserStake`에는 영향을 주지 않고 Stake 컨트랙트의 ETH 잔고만 확보할 수 있다.
----
+<hr />
 다음으로 `StakeWETH`의 상태 업데이트 순서를 보자.
 ```solidity
 function StakeWETH(uint256 amount) public returns (bool){
@@ -136,7 +136,7 @@ WETH가 실제로 이동하지 않아도 다음 상태가 만들어진다.
 3. `Stakers[msg.sender] = true`
 4. Stake 컨트랙트의 ETH 잔고는 그대로
 즉 `totalStaked`를 실제 ETH 잔고보다 크게 만들 수 있다.
----
+<hr />
 마지막으로 `Unstake`와 남는 `Stakers` 상태를 보자.
 ```solidity
 function Unstake(uint256 amount) public returns (bool){

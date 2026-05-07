@@ -39,16 +39,16 @@ contract Token {
 }
 ```
 ## 배경지식
----
+<hr />
 `uint256`은 부호 없는 256비트 정수다. 따라서 표현할 수 있는 값은 \$0\$부터 \$2\^\{256\}-1\$까지다.
 문제는 이 범위를 벗어나는 연산이다. 예를 들어 `uint256` 값 0에서 1을 빼면 -1이 되는 것이 아니라 $`2^{256}-1`$로 돌아간다.
 문제 힌트에 나온 odometer도 같은 의미다. 주행거리계가 최대값을 넘으면 다시 0으로 돌아가듯이, 고정 크기 정수도 범위를 벗어나면 처음이나 끝 값으로 이어진다.
 ![screenshot](./image-1.png)
----
+<hr />
 이 문제는 `pragma solidity ^0.6.0`을 사용한다. Solidity 0.8.0 이전에는 기본 산술 연산에서 오버플로우/언더플로우를 자동으로 검사하지 않는다.
 따라서 `SafeMath` 없이 `uint256` 뺄셈을 하면 언더플로우가 발생해도 revert되지 않고, 값이 `uint256` 범위 안에서 순환한다. 그래서 `balances[msg.sender] - _value`가 방어 코드처럼 보이지만 실제로는 막아주지 못한다.
 ## 문제 코드 분석
----
+<hr />
 먼저 잔액 구조를 보자.
 ```solidity
 mapping(address => uint256) balances;
@@ -60,7 +60,7 @@ constructor(uint256 _initialSupply) public {
 ```
 `balances`는 주소별 토큰 잔액을 저장한다. 플레이어는 시작할 때 20 토큰을 가지고, 클리어 조건은 20보다 많은 토큰을 갖는 것이다.
 즉 `totalSupply`를 정상적으로 늘릴 필요는 없다. `balanceOf(player)`만 20보다 커지면 된다.
----
+<hr />
 문제는 잔액 검사에 있다.
 ```solidity
 require(balances[msg.sender] - _value >= 0);
@@ -71,7 +71,7 @@ require(balances[msg.sender] - _value >= 0);
 ```solidity
 require(balances[msg.sender] >= _value);
 ```
----
+<hr />
 상태 업데이트는 다음 순서로 진행된다.
 ```solidity
 balances[msg.sender] -= _value;

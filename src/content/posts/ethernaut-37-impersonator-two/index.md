@@ -68,13 +68,13 @@ contract ImpersonatorTwo is Ownable {
 }
 ```
 ## 배경지식
----
+<hr />
 ECDSA 서명은 메시지 해시를 $`z`$, 개인키를 $`d`$, secp256k1의 group order를 $`n`$이라고 할 때 대략 다음 형태로 만들어진다.
 $$
 s \equiv k^{-1}(z + rd) \pmod n
 $$
 여기서 $`k`$는 서명마다 새로 써야 하는 nonce다. 서명 결과에 들어가는 $`r`$은 $`kG`$의 x좌표에서 나온다. 서로 다른 메시지에 대한 두 서명의 $`r`$이 같다면 같은 $`k`$를 재사용했다는 강한 신호다.
----
+<hr />
 같은 개인키 $`d`$와 같은 $`k`$로 두 메시지 $`z_1`$, $`z_2`$를 서명했다고 하자.
 $$
 s_1 \equiv k^{-1}(z_1 + rd) \pmod n
@@ -95,14 +95,14 @@ $$
 d \equiv (s_1k-z_1)r^{-1} \pmod n
 $$
 즉 같은 $`r`$을 가진 두 서명과 각각의 메시지 해시만 알면 owner의 개인키를 복구할 수 있다.
----
+<hr />
 컨트랙트는 `ECDSA.toEthSignedMessageHash`를 사용한다. 따라서 서명 대상은 단순한 `keccak256(message)`가 아니라 다음 prefix가 붙은 해시다.
 ```solidity
 keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n", message.length, message))
 ```
 `setAdmin`의 메시지도 봐야 한다. `abi.encodePacked("admin", nonce.toString(), newAdmin)`에서 `newAdmin`은 `0x...` 문자열이 아니라 20바이트 address 값 그대로 이어 붙는다.
 ## 문제 코드 분석
----
+<hr />
 힌트에서는 owner가 lock과 admin 설정에 사용한 두 서명을 보라고 한다. 실제 인스턴스 생성 시에는 팩토리에서 다음 순서로 호출된다.
 ```solidity
 bytes constant SWITCH_LOCK_SIG = abi.encodePacked(
@@ -128,7 +128,7 @@ instance.setAdmin(SET_ADMIN_SIG, ADMIN);
 r = e5648161e95dbf2bfc687b72b745269fa906031e2108118050aba59524a23c40
 ```
 서명 nonce $`k`$가 재사용됐으므로, `switchLock`에 쓰인 메시지와 `setAdmin`에 쓰인 메시지 해시를 알면 owner 개인키를 복구할 수 있다.
----
+<hr />
 팩토리 호출 순서를 기준으로 처음 `nonce`는 0이다.
 ```solidity
 function switchLock(bytes memory signature) public {
@@ -148,7 +148,7 @@ function setAdmin(bytes memory signature, address newAdmin) public {
 }
 ```
 두 번째 호출은 `setAdmin`이므로 메시지는 `abi.encodePacked("admin", "1", ADMIN)`이다. 이 호출 뒤 `nonce`는 2가 되고 `admin`은 초기 admin 주소가 된다.
----
+<hr />
 서명 검증은 owner 주소로 recover되는지만 본다.
 ```solidity
 function _verify(bytes32 hash, bytes memory signature) internal view returns (bool) {

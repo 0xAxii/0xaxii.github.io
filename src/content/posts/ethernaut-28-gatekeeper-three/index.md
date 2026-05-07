@@ -94,24 +94,24 @@ contract GatekeeperThree {
 }
 ```
 ## 배경지식
----
+<hr />
 Solidity 0.4.22 이전에는 컨트랙트 이름과 같은 함수를 생성자로 쓰는 방식이 있었다. 지금은 `constructor` 키워드를 쓰기 때문에 `construct0r`는 생성자가 아니라 그냥 public 함수다.
 배포 시 자동 실행되는 초기화 코드가 아니고, 아무나 호출할 수 있는 일반 함수라고 보면 된다. 이 차이 때문에 `owner`를 나중에 덮어쓸 수 있다.
----
+<hr />
 `private`은 Solidity 레벨에서 다른 컨트랙트가 직접 접근하지 못하게 할 뿐, 체인에 저장된 값을 숨기지는 않는다. 컨트랙트의 storage는 슬롯 단위로 공개되어 있고 `eth_getStorageAt` 같은 RPC로 읽을 수 있다.
 `SimpleTrick`의 상태 변수는 순서대로 저장된다.
 1. `target`: slot 0
 2. `trick`: slot 1
 3. `password`: slot 2
 `createTrick()`으로 `SimpleTrick`을 만든 뒤 `trick` 주소를 얻고, 그 컨트랙트의 slot 2를 읽으면 `password`를 알 수 있다.
----
+<hr />
 `send`는 ETH 전송에 실패해도 전체 트랜잭션을 revert하지 않고 `false`를 반환한다. `gateThree`는 이 실패를 오히려 통과 조건으로 사용한다.
 공격 컨트랙트를 `owner`로 만든 뒤, 공격 컨트랙트가 ETH를 받을 수 없게 `receive`나 payable fallback을 두지 않으면 `payable(owner).send(0.001 ether)`가 실패한다.
----
+<hr />
 컨트랙트에 `receive()`가 없어도 ETH를 강제로 보낼 수 있는 방법이 있다. 여기서는 별도 컨트랙트를 만들고 생성자에서 `selfdestruct`를 호출해 `GatekeeperThree`로 잔액을 보내면 된다.
 Cancun 이후에도 생성 중인 컨트랙트가 같은 트랜잭션 안에서 `selfdestruct`되는 경우에는 잔액 전송이 가능하다. 이 문제에서는 `address(this).balance > 0.001 ether` 조건만 만족하면 된다.
 ## 문제 코드 분석
----
+<hr />
 먼저 `construct0r`와 `gateOne`을 보자.
 ```solidity
 function construct0r() public {
@@ -126,7 +126,7 @@ modifier gateOne() {
 ```
 `construct0r`는 `constructor`가 아니다. 이름에 알파벳 `o` 대신 숫자 `0`이 들어가 있어서 누구나 호출 가능한 public 함수다.
 `gateOne`은 `msg.sender == owner`이면서 `tx.origin != owner`이어야 한다. EOA가 직접 `enter()`를 호출하면 `msg.sender`와 `tx.origin`이 같아서 통과할 수 없다. 따라서 공격 컨트랙트를 `owner`로 만든 뒤, EOA가 공격 컨트랙트를 통해 `enter()`를 호출해야 한다.
----
+<hr />
 이제 `createTrick`과 `password`를 보자.
 ```solidity
 function createTrick() public {
@@ -155,7 +155,7 @@ await web3.eth.getStorageAt('0xd21E19b406fc956392AcF8415D41fbAE6655bD6a', 2)
 '0x00000000000000000000000000000000000000000000000000000000692e9ca4'
 ```
 slot 0과 slot 1은 주소값이고, slot 2의 `0x692e9ca4`가 `password`다. 이 값을 `uint256`으로 넘기면 `allowEntrance`가 `true`가 된다.
----
+<hr />
 마지막으로 `gateThree`의 실패 조건을 보자.
 ```solidity
 modifier gateThree() {

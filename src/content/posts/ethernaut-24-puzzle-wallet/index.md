@@ -117,7 +117,7 @@ contract PuzzleWallet {
 }
 ```
 ## 배경지식
----
+<hr />
 `PuzzleProxy`는 `UpgradeableProxy`를 상속한다. 문제 코드에는 import만 보이기 때문에 실제 동작을 보려면 helper 코드를 같이 봐야 한다.
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -164,7 +164,7 @@ contract UpgradeableProxy is Proxy {
 ```
 [https://github.com/OpenZeppelin/ethernaut/blob/master/contracts/src/helpers/UpgradeableProxy-08.sol](https://github.com/OpenZeppelin/ethernaut/blob/master/contracts/src/helpers/UpgradeableProxy-08.sol)
 `UpgradeableProxy`는 implementation 주소를 EIP-1967 슬롯에 저장한다. 그래서 implementation 주소 자체는 일반적인 slot0, slot1과 충돌하지 않는다. 하지만 `PuzzleProxy`가 직접 선언한 `pendingAdmin`, `admin`은 slot0, slot1에 놓인다.
----
+<hr />
 `Proxy`는 fallback에서 implementation으로 `delegatecall`한다.
 ```solidity
 abstract contract Proxy {
@@ -198,11 +198,11 @@ abstract contract Proxy {
 [https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Proxy.sol](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Proxy.sol)
 즉 proxy 주소로 `PuzzleWallet`의 함수 selector를 보내면, proxy에는 그 함수가 없으므로 fallback이 실행되고 implementation인 `PuzzleWallet` 코드가 `delegatecall`로 실행된다.
 `delegatecall`은 코드만 빌려오고 storage는 호출한 컨트랙트의 storage를 사용한다. 따라서 `PuzzleWallet` 코드가 실행되더라도 실제로 읽고 쓰는 storage는 `PuzzleProxy`의 storage다.
----
+<hr />
 `delegatecall`에서는 `msg.sender`와 `msg.value`가 상위 호출의 값을 유지한다. 이 값은 이 문제에서 두 군데에 사용된다.
 먼저 proxy를 통해 wallet 함수를 호출해도 `msg.sender`는 공격자 주소로 유지된다. 그래서 `addToWhitelist`의 `msg.sender == owner` 같은 검사가 proxy storage의 `owner` 값을 기준으로 공격자를 검사하게 된다.
 또 `multicall` 내부의 `address(this).delegatecall(data[i])`에서도 같은 `msg.value`가 유지된다. 이 때문에 한 번만 ether를 보냈는데, 중첩된 `multicall` 안에서 `deposit`을 여러 번 실행하면 내부 accounting인 `balances[msg.sender]`가 실제 입금액보다 크게 증가할 수 있다.
----
+<hr />
 `PuzzleProxy`와 `PuzzleWallet`의 앞쪽 storage layout을 나란히 보자.
 ```solidity
 contract PuzzleProxy is UpgradeableProxy {
@@ -220,7 +220,7 @@ proxy를 통해 wallet 코드를 실행하면 `PuzzleWallet.owner`는 proxy의 s
 - `admin` ↔ `maxBalance`
 문제 목표는 proxy의 `admin`을 플레이어 주소로 바꾸는 것이다. wallet의 `setMaxBalance(uint256 _maxBalance)`가 `maxBalance`를 쓰기 때문에, 이 함수를 proxy를 통해 호출할 수 있으면 slot1인 proxy의 `admin`을 덮을 수 있다.
 ## 문제 코드 분석
----
+<hr />
 먼저 `owner` 탈취 경로를 보자.
 ```solidity
 function proposeNewAdmin(address _newAdmin) external {
@@ -234,7 +234,7 @@ function addToWhitelist(address addr) external {
 ```
 `proposeNewAdmin`은 아무나 호출할 수 있고 proxy의 `pendingAdmin`을 바꾼다. 그런데 이 값은 wallet 관점의 `owner`와 같은 slot0이다.
 따라서 proxy에서 `proposeNewAdmin(공격자)`를 호출하면, proxy를 통해 wallet 코드를 실행할 때 `owner == 공격자`로 보인다. 그 다음 `addToWhitelist(공격자)`를 호출하면 `msg.sender == owner` 검사를 통과하고 공격자를 whitelist에 등록할 수 있다.
----
+<hr />
 이제 `admin`을 덮는 함수를 보자.
 ```solidity
 function setMaxBalance(uint256 _maxBalance) external onlyWhitelisted {
@@ -245,7 +245,7 @@ function setMaxBalance(uint256 _maxBalance) external onlyWhitelisted {
 `setMaxBalance`는 wallet의 `maxBalance`를 바꾸는 함수지만, proxy를 통해 호출하면 proxy의 slot1을 쓴다. slot1은 proxy의 `admin`이다.
 따라서 `_maxBalance`에 `uint256(uint160(player))`를 넣으면 proxy의 `admin`이 `player` 주소로 바뀐다.
 다만 조건이 있다. 호출자는 whitelist에 있어야 하고, proxy의 ether balance가 0이어야 한다. whitelist는 앞에서 해결했고, 남은 문제는 컨트랙트에 들어 있는 0.001 ether를 전부 빼는 것이다.
----
+<hr />
 다음으로 `multicall`의 입금 중복을 보자.
 ```solidity
 function deposit() external payable onlyWhitelisted {
@@ -273,7 +273,7 @@ function multicall(bytes[] calldata data) external payable onlyWhitelisted {
 `multicall`은 같은 호출 안에서 `deposit` selector가 직접 두 번 들어오는 것은 막는다. 하지만 막는 기준은 현재 `multicall` 함수의 지역변수 `depositCalled`다.
 바깥 `multicall`에서 `deposit()`을 한 번 호출하고, 다른 원소로 안쪽 `multicall([deposit()])`을 넣으면 안쪽 호출은 새로운 `depositCalled`를 가진다. 그래서 각 `multicall` 입장에서는 `deposit`이 한 번씩만 호출된 것처럼 보인다.
 문제는 둘 다 `delegatecall`이라 같은 `msg.value`를 본다는 점이다. 예를 들어 `0.001 ether`를 보내고 `deposit`이 두 번 실행되면 실제 proxy balance는 `0.001 ether`만 증가하지만, `balances[공격자]`는 `0.002 ether` 증가한다.
----
+<hr />
 마지막으로 `execute`로 잔액을 비우는 부분을 보자.
 ```solidity
 function execute(address to, uint256 value, bytes calldata data) external payable onlyWhitelisted {

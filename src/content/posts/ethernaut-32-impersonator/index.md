@@ -141,19 +141,19 @@ contract ECLocker {
 }
 ```
 ## 배경지식
----
+<hr />
 문제를 풀기 전에 ECDSA를 간단히 보자. ECDSA는 Elliptic Curve Digital Signature Algorithm의 줄임말로, 타원곡선 디지털 서명 알고리즘이다.
 ECDSA는 보통 다음 세 가지를 보장하기 위해 쓰인다.
 - 인증 : 이 서명이 특정 개인키 소유자에게서 나왔는지 확인
 - 무결성 : 메시지가 바뀌지 않았는지 확인
 - 부인 방지 : 개인키 없이는 같은 서명을 만들기 어렵게 함
 ECDSA는 암호화 알고리즘이 아니라, 특정 개인키 소유자가 어떤 메시지에 서명했다는 사실을 증명하기 위해 사용된다.
----
+<hr />
 ECDSA는 보통 소수체 위의 타원곡선을 쓴다.
 소수 $`p`$에 대해 유한체를 $`\mathbb{F}_p = \{0,1,2,\dots,p-1\}`$와 같이 쓰고, 곡선 위의 좌표 계산은 $`\mod p`$로 진행한다.
 일반적인 타원곡선은 $`E: y^2 \equiv x^3 + ax + b \pmod p`$와 같이 쓴다.
 또한 곡선 위의 점들은 $`(x,y)∈\\mathbb{F}_p^2`$를 만족해야 하고, 여기에 항등원인 무한원점 $`O`$를 추가한다.
----
+<hr />
 타원곡선 위의 점들은 덧셈 연산을 가진다.
 점 $`P=(x_1,y_1), \quad Q=(x_2,y_2)`$에 대해 $`P+Q = (x_3,y_3)`$는 다음과 같은 규칙에 따라 계산된다.
 먼저 P와 Q가 다를 때의 기울기는 다음과 같이 구한다.
@@ -171,7 +171,7 @@ $$
 $$
 y_3 \equiv \lambda(x_1-x_3)-y_1 \pmod p
 $$
----
+<hr />
 이제 P와 Q가 같을 때, 즉 $`2P=P+P`$인 경우를 보자.
 기울기는 다음과 같다.
 $$
@@ -184,7 +184,7 @@ $$
 $$
 y_3 \equiv \lambda(x_1-x_3)-y_1 \pmod p
 $$
----
+<hr />
 덧셈 연산에 이어 곱셈 연산을 보자.
 ECDSA에서는 점의 덧셈을 반복해서 스칼라 곱을 계산한다.
 $$
@@ -229,7 +229,7 @@ d \in \{1,2,\dots,n-1\}
 $$
 공개키는 $`Q=dG`$로 잡고, 여기서 $`Q`$는 타원곡선 위의 점이다.
 개인키 $`d`$로 공개키 $`Q`$를 계산하는 것은 쉽지만 공개키 $`Q`$와 기준점 $`G`$만 보고 $`d`$를 찾는 것은 어렵다.
----
+<hr />
 서명할 메시지를 $`m`$이라고 하자.
 ECDSA는 메시지 전체를 직접 서명하지 않고, 먼저 해시한다.
 $$
@@ -260,7 +260,7 @@ $$
 주의할 점은 $`x_R`$은 $`\\mathbb{F}_p`$의 원소지만, $`r`$을 만들 때는 $`x_R`$를 정수로 해석한 뒤 $`\\mod n`$을 취한다.
 $`s \equiv k^{-1}(z + rd) \pmod n`$으로 계산하고, 만약 $`s = 0`$이면 다른 $`k`$를 골라 다시 진행한다.
 최종 서명은 $`(r,s)`$이다.
----
+<hr />
 검증자는 메시지 $`m`$, 서명 $`(r,s)`$, 공개키 $`Q`$를 가지고, 개인키 $`d`$를 모른다.
 먼저 $`1\le r, s \le n-1`$ 인지 확인하고 아니면 거절한다.
 이후 $`z = \operatorname{int}(H(m))`$와 $`w \equiv s^{-1} \pmod n`$를 계산한다.
@@ -280,7 +280,7 @@ $`k \equiv wz + wrd \pmod n`$
 즉 검증자가 계산한 $`X = u_1G + u_2Q`$는 원래 서명자가 계산했던 $`R = kG`$와 같다.
 따라서 $`X = R`$이다.
 결론적으로, 서명자가 만든 $`r = x_R \bmod n`$와 검증자가 계산한 $`x_X \bmod n`$이 같아야 한다.
----
+<hr />
 ECDSA에서 가장 위험한 부분은 $`k`$다.
 서명식은 $`s\equiv k^{-1}(z + rd) \pmod n`$이고,
 이를 개인키 $`d`$에 대해 정리하면 $`d \equiv r^{-1}(sk - z) \pmod n`$다.
@@ -293,7 +293,7 @@ ECDSA에서 가장 위험한 부분은 $`k`$다.
 따라서 $`k \equiv \frac{z_1-z_2}{s_1-s_2} \pmod n`$
 즉, $`k \equiv (z_1-z_2)(s_1-s_2)^{-1} \pmod n`$이다.
 $`k`$를 구하면 개인키는 $`d \\equiv r^{-1}(s_1k-z_1) \\pmod n`$로 복구할 수 있다.
----
+<hr />
 위의 설명대로라면 서명은 $`(r, s)`$로 검증할 수 있다. 그러면 Ethereum 서명에서 나오는 $`v`$는 뭘까?
 Ethereum에서는 `ecrecover(z, v, r, s)`와 같은 함수를 쓴다. `ecrecover`는 서명이 유효하면 서명자의 주소를, 실패하면 `address(0)`을 반환하는 함수이다.
 이더리움 주소는 공개키에서 만들어진다. 공개키를 $`Q=(x_Q,y_Q)`$라 하면, 대략 다음과 같이 주소가 정해진다.
@@ -305,7 +305,7 @@ $$
 이때 어느 쪽 점을 써야 하는지 알려주는 recovery id가 $`v`$이다. 이 문제에서는 일반적인 Ethereum 서명처럼 $`v`$가 27 또는 28로 들어온다.
 ## 문제 코드 분석
 이제 문제 코드를 하나씩 보자.
----
+<hr />
 먼저 `Impersonator`는 factory 역할을 하는 컨트랙트다. owner만 `deployNewLock`을 호출할 수 있고, 이 함수는 `ECLocker`를 새로 배포한다.
 ```solidity
 function deployNewLock(bytes memory signature) public onlyOwner {
@@ -315,7 +315,7 @@ function deployNewLock(bytes memory signature) public onlyOwner {
 }
 ```
 `NewLock` 이벤트에는 `signature`가 그대로 찍힌다. 즉, 공격자는 새 lock이 만들어질 때 사용된 초기 controller의 서명을 이벤트 로그에서 얻을 수 있다.
----
+<hr />
 `ECLocker`의 생성자를 보면 먼저 lock마다 고정된 메시지 해시를 만든다.
 ```solidity
 assembly {
@@ -333,7 +333,7 @@ mstore(add(ptr, 64), mload(add(_signature, 0x20)))
 mstore(add(ptr, 96), mload(add(_signature, 0x40)))
 ```
 `ecrecover` precompile의 입력은 `(hash, v, r, s)` 순서이므로, `_signature`는 일반적인 `(r, s, v)` 형태로 들어온다고 볼 수 있다. 복구된 주소는 `initialController`가 되고, 이 주소가 lock의 controller로 설정된다.
----
+<hr />
 이제 서명 재사용 방지를 보자.
 ```solidity
 usedSignatures[keccak256(_signature)] = true;
@@ -345,7 +345,7 @@ require (!usedSignatures[signatureHash], SignatureAlreadyUsed());
 ```
 즉 constructor에서는 `keccak256(_signature)`을 쓰고, `_isValidSignature`에서는 `keccak256(abi.encode([r, s, v]))`를 쓴다. 같은 서명이라도 해시되는 bytes 형태가 다르기 때문에, 생성자에서 사용 처리한 서명이 검증 함수에서는 사용된 것으로 인식되지 않는다.
 이벤트에서 얻은 초기 서명을 그대로 재사용하는 것도 가능하다. 다만 여기서는 ECDSA 서명 자체의 malleability도 사용할 수 있다.
----
+<hr />
 `open`과 `changeController`는 둘 다 `_isValidSignature`만 통과하면 실행된다.
 ```solidity
 function changeController(uint8 v, bytes32 r, bytes32 s, address newController) external {

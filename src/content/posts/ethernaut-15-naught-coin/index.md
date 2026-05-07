@@ -53,10 +53,10 @@ contract NaughtCoin is ERC20 {
 }
 ```
 ## 배경지식
----
+<hr />
 ERC20은 `transfer`, `approve`, `transferFrom`, `balanceOf`, `allowance` 같은 공통 함수를 정해둔 토큰 표준이다.
 NaughtCoin은 직접 모든 전송 로직을 구현한 것이 아니라 OpenZeppelin의 `ERC20`을 상속한다. 따라서 코드에 보이는 `transfer`만 볼 것이 아니라, 상속받은 ERC20 표준 함수들도 같이 봐야 한다.
----
+<hr />
 ERC20에서 토큰을 옮기는 대표적인 방법은 두 가지다.
 `transfer(to, amount)`는 `msg.sender`의 토큰을 바로 `to`에게 보낸다. 즉, 자기 잔액을 직접 보내는 함수다.
 ```solidity
@@ -68,7 +68,7 @@ function transfer(address to, uint256 value) external returns (bool);
 function transferFrom(address from, address to, uint256 value) external returns (bool);
 ```
 ![screenshot](./image-2.png)
----
+<hr />
 `approve(spender, amount)`는 `spender`가 내 토큰을 `amount`만큼 가져갈 수 있도록 허용하는 함수다. 이 허용량은 `allowance(owner, spender)`로 조회할 수 있다.
 흐름은 이렇게 보면 된다.
 1. `player`가 `approve(spender, amount)`를 호출한다.
@@ -76,7 +76,7 @@ function transferFrom(address from, address to, uint256 value) external returns 
 3. ERC20은 `allowance(player, spender)`를 차감하고 `player`의 잔액을 `receiver`로 옮긴다.
 이 문제에서는 `spender`를 그냥 `player` 자기 자신으로 둬도 된다. `approve(player, amount)`로 자신에게 allowance를 열고, 같은 주소에서 `transferFrom(player, receiver, amount)`를 호출하면 `msg.sender`는 `player`이므로 allowance 조건을 만족한다.
 ## 문제 코드 분석
----
+<hr />
 먼저 초기 토큰 지급을 보자.
 ```solidity
 uint256 public timeLock = block.timestamp + 10 * 365 days;
@@ -92,7 +92,7 @@ constructor(address _player) ERC20("NaughtCoin", "0x0") {
 ```
 컨트랙트가 배포되면 `player`에게 전체 발행량이 민팅된다. 목표는 이 `player`의 토큰 잔액을 0으로 만드는 것이다.
 `INITIAL_SUPPLY`는 `1000000 * 10^18`이다. OpenZeppelin ERC20의 기본 `decimals()`가 18이기 때문에 실제 최소 단위 기준으로는 `1000000000000000000000000`이 된다.
----
+<hr />
 잠금은 여기서 걸린다.
 ```solidity
 function transfer(address _to, uint256 _value) public override lockTokens returns (bool) {
@@ -110,7 +110,7 @@ modifier lockTokens() {
 ```
 `lockTokens`는 `msg.sender == player`일 때 10년이 지나야 통과하게 만든다. 그런데 이 modifier가 붙은 함수는 `transfer`뿐이다.
 `player`가 `transfer`를 직접 호출하면 막힌다. 하지만 ERC20에는 `transferFrom`도 있고, NaughtCoin은 `transferFrom`을 override하지 않았다. 상속받은 OpenZeppelin의 `transferFrom`은 그대로 열려 있는 셈이다.
----
+<hr />
 문제는 제한이 한쪽에만 있다는 점이다.
 ```solidity
 contract NaughtCoin is ERC20 {
