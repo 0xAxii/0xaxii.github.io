@@ -185,6 +185,7 @@ function withdraw() public onlyAdmin {
 5. 현재 플레이어 주소로 `admin2<player>` 메시지를 서명해 `setAdmin`을 호출한다.
 6. 그 다음 nonce는 3이므로 `lock3` 메시지를 서명해 `switchLock`을 호출한다.
 7. 이제 `admin == player`, `locked == false`이므로 `withdraw`로 잔액을 가져온다.
+
 `vm.sign`은 임의 private key와 digest로 서명을 만들어주므로, 복구한 owner private key를 트랜잭션 송신에 쓰는 것이 아니라 문제 컨트랙트가 요구하는 bytes signature를 만드는 데만 사용한다. 실제 트랜잭션은 플레이어의 `PRIVATE_KEY`로 보낸다.
 ### 익스플로잇
 ```solidity

@@ -14,6 +14,7 @@ Bob is a lazy developer and “optimized” some steps of the ECDSA algorithm. C
 Your goal is to steal the \$ETK tokens that ALICE (`0xA11CE84AcB91Ac59B0A4E2945C9157eF3Ab17D4e`) just redeemed.
 Things that might help:
 - Look for any missing step in the [Elliptic Curve Digital Signature Algorithm (ECDSA)](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm).
+
 Good luck. Elliptic curves do not forgive domain confusion.
 ### 코드
 ```solidity

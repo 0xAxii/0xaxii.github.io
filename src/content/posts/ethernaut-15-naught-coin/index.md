@@ -80,6 +80,7 @@ function transferFrom(address from, address to, uint256 value) external returns 
 1. `player`가 `approve(spender, amount)`를 호출한다.
 2. `spender`가 `transferFrom(player, receiver, amount)`를 호출한다.
 3. ERC20은 `allowance(player, spender)`를 차감하고 `player`의 잔액을 `receiver`로 옮긴다.
+
 이 문제에서는 `spender`를 그냥 `player` 자기 자신으로 둬도 된다. `approve(player, amount)`로 자신에게 allowance를 열고, 같은 주소에서 `transferFrom(player, receiver, amount)`를 호출하면 `msg.sender`는 `player`이므로 allowance 조건을 만족한다.
 ## 문제 코드 분석
 

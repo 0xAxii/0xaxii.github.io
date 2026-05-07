@@ -221,9 +221,11 @@ function validateInstance(address payable _instance, address _player) public ove
 3. 방금 생성된 `Engine.initialize()` 직접 호출
 4. `Engine.upgradeToAndCall(bomb, abi.encodeWithSelector(MotorbikeBomb.explode.selector))` 호출
 5. 다음 트랜잭션에서 `Ethernaut.submitLevelInstance(motorbike)` 호출
+
 `MotorbikeFactory`는 내부에서 먼저 `Engine`을 만들고, 그 다음 `Motorbike`를 만든다. 그래서 factory의 현재 nonce를 기준으로 다음 주소를 RLP 방식으로 계산할 수 있다.
 - `engine = computeCreateAddress(motorbikeLevel, factoryNonce)`
 - `motorbike = computeCreateAddress(motorbikeLevel, factoryNonce + 1)`
+
 이렇게 생성된 instance는 `Ethernaut`에 내 EOA의 instance로 기록된다. 이후 `submitLevelInstance()`도 내 EOA로 호출하면 사이트의 완료 마크가 남는다.
 ### 익스플로잇
 ```solidity

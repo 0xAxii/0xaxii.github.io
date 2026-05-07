@@ -124,6 +124,7 @@ contract Delegation {
 - `Delegation`에 없는 함수 selector를 보내 `fallback()`을 실행한다.
 - `fallback()`이 `msg.data`를 그대로 `delegatecall`에 넘긴다.
 - `Delegate.pwn()`이 `delegatecall` 컨텍스트에서 실행되어 `Delegation.owner`를 바꾼다.
+
 이 조건이 모두 맞아 있으니 `pwn()`의 selector인 `0xdd365b8b`만 `Delegation` 인스턴스에 보내면 된다.
 ## 풀이
 `pwn()`의 함수 selector를 구해서 `Delegation` 인스턴스에 calldata로 보낸다.

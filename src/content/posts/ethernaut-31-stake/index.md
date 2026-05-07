@@ -94,6 +94,7 @@ Solidity에서 일반적인 인터페이스 호출은 대상 함수가 revert하
 2. `totalStaked > address(Stake).balance`
 3. `Stakers[msg.sender] == true`
 4. `UserStake[msg.sender] == 0`
+
 겉으로 보면 컨트랙트의 ETH를 모두 빼야 할 것 같지만, 실제 검증 조건은 ETH 잔고가 0보다 커야 한다. 마지막에는 Stake 컨트랙트에 1 wei라도 남아 있어야 한다.
 
 ---
@@ -145,6 +146,7 @@ WETH가 실제로 이동하지 않아도 다음 상태가 만들어진다.
 2. `UserStake[msg.sender] += amount`
 3. `Stakers[msg.sender] = true`
 4. Stake 컨트랙트의 ETH 잔고는 그대로
+
 즉 `totalStaked`를 실제 ETH 잔고보다 크게 만들 수 있다.
 
 ---

@@ -226,6 +226,7 @@ contract PuzzleWallet {
 proxy를 통해 wallet 코드를 실행하면 `PuzzleWallet.owner`는 proxy의 slot0을 읽고, `PuzzleWallet.maxBalance`는 proxy의 slot1을 읽는다. 따라서 다음 대응이 생긴다.
 - `pendingAdmin` ↔ `owner`
 - `admin` ↔ `maxBalance`
+
 문제 목표는 proxy의 `admin`을 플레이어 주소로 바꾸는 것이다. wallet의 `setMaxBalance(uint256 _maxBalance)`가 `maxBalance`를 쓰기 때문에, 이 함수를 proxy를 통해 호출할 수 있으면 slot1인 proxy의 `admin`을 덮을 수 있다.
 ## 문제 코드 분석
 
