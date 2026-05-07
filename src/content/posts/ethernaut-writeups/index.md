@@ -1,5 +1,5 @@
 ---
-title: "Ethernaut Writeup 모음"
+title: "Ethernaut Writeup"
 published: 2026-05-07
 description: "Ethernaut 40개 문제 풀이를 한 곳에서 볼 수 있게 정리했다."
 category: "CTF/Wargame"
