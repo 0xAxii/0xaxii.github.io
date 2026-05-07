@@ -155,7 +155,7 @@ constructor(address wallet_) {
     balances[wallet_] = 10 ** 6;
 }
 ```
-`Coin`은 생성될 때 `Wallet` 주소에 $`10^6`$ 개의 코인을 넣어둔다. 레벨의 목표는 이 `Wallet`이 가진 코인을 모두 빼내는 것이다.
+`Coin`은 생성될 때 `Wallet` 주소에 $10^6$ 개의 코인을 넣어둔다. 레벨의 목표는 이 `Wallet`이 가진 코인을 모두 빼내는 것이다.
 일반적인 흐름대로라면 `requestDonation()`을 한 번 호출할 때마다 10개만 받을 수 있다. 단순 반복으로는 비효율적이므로 `transferRemainder`가 실행되도록 만들어야 한다.
 
 ---
@@ -194,7 +194,7 @@ function transferRemainder(address dest_) external onlyOwner {
 ```
 `Wallet`의 `owner`는 `GoodSamaritan`이다. 사용자는 `Wallet`을 직접 호출할 수 없지만, `GoodSamaritan.requestDonation()`을 통해 `donate10`과 `transferRemainder`가 호출되도록 만들 수 있다.
 `donate10`은 잔액이 10 이상이면 `coin.transfer(dest_, 10)`을 실행한다. 이 호출 중 공격 컨트랙트의 `notify(10)`이 호출되고, 여기서 `NotEnoughBalance()`로 revert하면 `donate10` 전체가 실패한다. 이때 앞에서 줄어든 10개 전송도 함께 롤백된다.
-그 다음 `GoodSamaritan`의 `catch`가 이 revert를 지갑 잔액 부족으로 착각하고 `transferRemainder`를 실행한다. 이 두 번째 전송은 금액이 $`10^6`$ 이므로 공격 컨트랙트의 `notify`에서 revert하지 않게 만들면 전체 잔액을 받을 수 있다.
+그 다음 `GoodSamaritan`의 `catch`가 이 revert를 지갑 잔액 부족으로 착각하고 `transferRemainder`를 실행한다. 이 두 번째 전송은 금액이 $10^6$ 이므로 공격 컨트랙트의 `notify`에서 revert하지 않게 만들면 전체 잔액을 받을 수 있다.
 
 ---
 

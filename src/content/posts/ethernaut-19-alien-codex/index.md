@@ -125,7 +125,7 @@ Solidity 코드로는 `type(uint256).max - uint256(keccak256(abi.encode(1))) + 1
 ```solidity
 codex.length--;
 ```
-그러면 0에서 1을 빼면서 revert되지 않고 값이 `uint256` 범위 안에서 순환한다. 결과적으로 `codex.length`는 \$2\^\{256\}-1\$이 된다.
+그러면 0에서 1을 빼면서 revert되지 않고 값이 `uint256` 범위 안에서 순환한다. 결과적으로 `codex.length`는 $2^{256}-1$이 된다.
 이제 `revise(i, _content)`에서 사실상 모든 `uint256` 인덱스를 사용할 수 있으므로, 위에서 계산한 인덱스로 slot 0을 덮어쓸 수 있다.
 ## 문제 코드 분석
 
@@ -153,7 +153,7 @@ function retract() public contacted {
     codex.length--;
 }
 ```
-`codex`는 처음에 빈 배열이다. `makeContact()` 이후 바로 `retract()`를 호출하면 `codex.length`가 0에서 \$2\^\{256\}-1\$로 underflow된다.
+`codex`는 처음에 빈 배열이다. `makeContact()` 이후 바로 `retract()`를 호출하면 `codex.length`가 0에서 $2^{256}-1$로 underflow된다.
 이 값은 slot 1에 저장된다. 실제로 `retract()` 후 slot 1을 읽으면 최대 `uint256` 값이 들어간 것을 볼 수 있다.
 ```javascript
 await contract.retract()
@@ -178,7 +178,7 @@ bytes32 myaddr = bytes32(uint256(uint160(msg.sender)));
 ```
 `address`를 바로 `bytes32`로 바꾸는 대신 `uint160 -> uint256 -> bytes32` 순서로 변환한다. 이렇게 하면 주소값이 32바이트 값의 하위 20바이트에 들어간다.
 ## 풀이
-먼저 `makeContact()`로 `contacted` 제한을 통과할 수 있게 만든다. 그 다음 빈 배열 상태에서 `retract()`를 호출해 `codex.length`를 \$2\^\{256\}-1\$로 만든다.
+먼저 `makeContact()`로 `contacted` 제한을 통과할 수 있게 만든다. 그 다음 빈 배열 상태에서 `retract()`를 호출해 `codex.length`를 $2^{256}-1$로 만든다.
 이제 `codex[i]`가 slot 0을 가리키게 만드는 인덱스를 계산한다.
 ```solidity
 uint256 i = type(uint256).max - uint256(keccak256(abi.encode(1))) + 1;

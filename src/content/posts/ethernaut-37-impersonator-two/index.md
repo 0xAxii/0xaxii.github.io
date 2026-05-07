@@ -71,15 +71,15 @@ contract ImpersonatorTwo is Ownable {
 
 ---
 
-ECDSA 서명은 메시지 해시를 $`z`$, 개인키를 $`d`$, secp256k1의 group order를 $`n`$이라고 할 때 대략 다음 형태로 만들어진다.
+ECDSA 서명은 메시지 해시를 $z$, 개인키를 $d$, secp256k1의 group order를 $n$이라고 할 때 대략 다음 형태로 만들어진다.
 $$
 s \equiv k^{-1}(z + rd) \pmod n
 $$
-여기서 $`k`$는 서명마다 새로 써야 하는 nonce다. 서명 결과에 들어가는 $`r`$은 $`kG`$의 x좌표에서 나온다. 서로 다른 메시지에 대한 두 서명의 $`r`$이 같다면 같은 $`k`$를 재사용했다는 강한 신호다.
+여기서 $k$는 서명마다 새로 써야 하는 nonce다. 서명 결과에 들어가는 $r$은 $kG$의 x좌표에서 나온다. 서로 다른 메시지에 대한 두 서명의 $r$이 같다면 같은 $k$를 재사용했다는 강한 신호다.
 
 ---
 
-같은 개인키 $`d`$와 같은 $`k`$로 두 메시지 $`z_1`$, $`z_2`$를 서명했다고 하자.
+같은 개인키 $d$와 같은 $k$로 두 메시지 $z_1$, $z_2$를 서명했다고 하자.
 $$
 s_1 \equiv k^{-1}(z_1 + rd) \pmod n
 $$
@@ -90,7 +90,7 @@ $$
 $$
 s_1 - s_2 \equiv k^{-1}(z_1-z_2) \pmod n
 $$
-여기서 $`k`$를 복구할 수 있다.
+여기서 $k$를 복구할 수 있다.
 $$
 k \equiv (z_1-z_2)(s_1-s_2)^{-1} \pmod n
 $$
@@ -98,7 +98,7 @@ $$
 $$
 d \equiv (s_1k-z_1)r^{-1} \pmod n
 $$
-즉 같은 $`r`$을 가진 두 서명과 각각의 메시지 해시만 알면 owner의 개인키를 복구할 수 있다.
+즉 같은 $r$을 가진 두 서명과 각각의 메시지 해시만 알면 owner의 개인키를 복구할 수 있다.
 
 ---
 
@@ -135,7 +135,7 @@ instance.setAdmin(SET_ADMIN_SIG, ADMIN);
 ```plain text
 r = e5648161e95dbf2bfc687b72b745269fa906031e2108118050aba59524a23c40
 ```
-서명 nonce $`k`$가 재사용됐으므로, `switchLock`에 쓰인 메시지와 `setAdmin`에 쓰인 메시지 해시를 알면 owner 개인키를 복구할 수 있다.
+서명 nonce $k$가 재사용됐으므로, `switchLock`에 쓰인 메시지와 `setAdmin`에 쓰인 메시지 해시를 알면 owner 개인키를 복구할 수 있다.
 
 ---
 
@@ -180,8 +180,8 @@ function withdraw() public onlyAdmin {
 두 초기 서명에서 owner 개인키를 복구하면 된다.
 1. `switchLock` 초기 서명은 `lock0`에 대한 서명이다.
 2. `setAdmin` 초기 서명은 `abi.encodePacked("admin", "1", INITIAL_ADMIN)`에 대한 서명이다.
-3. 두 서명의 `r`이 같으므로 같은 $`k`$를 재사용했다.
-4. 위 공식으로 owner 개인키 $`d`$를 복구한다.
+3. 두 서명의 `r`이 같으므로 같은 $k$를 재사용했다.
+4. 위 공식으로 owner 개인키 $d$를 복구한다.
 5. 현재 플레이어 주소로 `admin2<player>` 메시지를 서명해 `setAdmin`을 호출한다.
 6. 그 다음 nonce는 3이므로 `lock3` 메시지를 서명해 `switchLock`을 호출한다.
 7. 이제 `admin == player`, `locked == false`이므로 `withdraw`로 잔액을 가져온다.

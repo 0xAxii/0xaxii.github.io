@@ -10,14 +10,19 @@ listed: false
 ## 문제
 ### 지문
 Look carefully at the contract's code below.
-You will beat this level if
-	you claim ownership of the contract
-	you reduce its balance to 0
-Things that might help
-How to send ether when interacting with an ABI
-How to send ether outside of the ABI
-Converting to and from wei/ether units (see help() command)
-Fallback methods
+
+You will beat this level if:
+
+- you claim ownership of the contract
+- you reduce its balance to 0
+
+Things that might help:
+
+- How to send ether when interacting with an ABI
+- How to send ether outside of the ABI
+- Converting to and from wei/ether units (see help() command)
+- Fallback methods
+
 ### 코드
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -64,10 +69,12 @@ contract Fallback {
 
 컨트랙트에 이더를 보내거나 존재하지 않는 함수를 호출하면 일반 함수 호출과 다른 진입점이 실행될 수 있다. 이때 사용되는 함수가 `receive()`와 `fallback()`이다.
 동작은 다음처럼 나뉜다.
+
 - `msg.data`가 비어 있고 이더만 전송되면 `receive()`가 있으면 `receive()`가 실행된다.
 - `msg.data`가 있거나, 호출한 함수 시그니처가 컨트랙트에 없으면 `fallback()`이 실행된다.
 - `receive()`는 이더 수신 전용 함수라서 항상 `payable`이다.
 - `fallback()`으로 이더를 받으려면 `payable`로 선언되어 있어야 한다.
+
 이 문제에서는 실제로 `fallback()` 함수가 아니라 `receive()` 함수가 사용된다. 그런데 제목이 Fallback인 이유는 솔리디티 `0.6.0` 이전에는 이 역할이 `fallback()` 하나로 처리되다가, 이후 `receive()`와 `fallback()`으로 분리되었기 때문이다.
 
 ---
@@ -121,8 +128,10 @@ receive() external payable {
 }
 ```
 owner를 실제로 바꾸는 함수는 `receive()`다. 이 함수는 이더만 들어오는 트랜잭션에서 실행되고, 조건은 두 가지다.
+
 - `msg.value > 0`
 - `contributions[msg.sender] > 0`
+
 첫 번째 조건은 `1 wei`만 보내도 만족한다. 두 번째 조건은 앞에서 `contribute({value: 1})`를 한 번 호출하면 만족한다. 따라서 공격자는 먼저 아주 작은 기여를 등록하고, 그 다음 함수 호출 없이 이더만 보내서 `receive()`를 실행시키면 `owner`가 된다.
 
 ---

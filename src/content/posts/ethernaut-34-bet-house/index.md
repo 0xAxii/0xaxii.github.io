@@ -142,7 +142,7 @@ contract PoolToken is ERC20, Ownable {
 ---
 
 이 문제에는 두 종류의 토큰이 나온다. `depositToken`은 처음 플레이어가 들고 있는 `Pool Deposit Token`, 즉 PDT이고, `wrappedToken`은 `Pool`에 예치했을 때 새로 민팅되는 내부 잔고 토큰이다.
-`deposit()`의 교환 규칙은 단순하다. `0.001 ether`를 넣으면 `wrappedToken` 10개를 받고, PDT 1개를 넣으면 `wrappedToken` 1개를 받는다. 플레이어는 처음에 PDT 5개만 있으므로 정상적으로는 PDT 5개와 ETH 예치를 합쳐도 `wrappedToken`은 \$10+5=15\$개뿐이다.
+`deposit()`의 교환 규칙은 단순하다. `0.001 ether`를 넣으면 `wrappedToken` 10개를 받고, PDT 1개를 넣으면 `wrappedToken` 1개를 받는다. 플레이어는 처음에 PDT 5개만 있으므로 정상적으로는 PDT 5개와 ETH 예치를 합쳐도 `wrappedToken`은 $10+5=15$개뿐이다.
 
 ---
 
