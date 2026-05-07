@@ -32,7 +32,9 @@ contract Telephone {
 }
 ```
 ## 배경지식
-<hr />
+
+---
+
 솔리디티에는 EVM이 자동으로 제공하는 내장 전역 변수들이 있다. 이 문제에서는 `msg.sender`와 `tx.origin`을 비교한다.
 `msg.sender`는 현재 함수를 직접 호출한 주소다. EOA가 컨트랙트 A를 호출하면 A 입장에서 `msg.sender`는 EOA이고, 컨트랙트 A가 컨트랙트 B를 호출하면 B 입장에서 `msg.sender`는 A가 된다.
 반면 `tx.origin`은 트랜잭션을 최초로 발생시킨 EOA를 가리킨다. 중간에 컨트랙트 호출이 몇 번 이어져도 한 트랜잭션 안에서 `tx.origin`은 처음 서명한 계정으로 유지된다.
@@ -41,11 +43,15 @@ contract Telephone {
 EOA -> Attack.attack() -> Telephone.changeOwner()
 ```
 이때 `Telephone` 입장에서 `tx.origin`은 EOA이고, `msg.sender`는 `Attack` 컨트랙트다. 이 순간 두 값이 달라진다.
-<hr />
+
+---
+
 `tx.origin`은 트랜잭션의 최초 발신자만 알려줄 뿐, 현재 함수 호출을 누가 직접 수행했는지는 알려주지 않는다. 그래서 권한 체크에 `tx.origin`을 섞으면 중간 컨트랙트를 끼워 넣는 호출 흐름에 취약해진다.
 소유자 변경처럼 권한이 필요한 로직은 보통 `msg.sender`를 기준으로 판단해야 한다. 현재 호출자를 기준으로 해야 어떤 컨트랙트가 실제로 함수를 호출했는지 통제할 수 있기 때문이다.
 ## 문제 코드 분석
-<hr />
+
+---
+
 먼저 초기 `owner`를 보자.
 ```solidity
 address public owner;
@@ -56,7 +62,9 @@ constructor() {
 ```
 배포 시점의 `msg.sender`가 `owner`로 저장된다. Ethernaut 인스턴스에서는 레벨 컨트랙트가 새 인스턴스를 만들어주므로, 처음부터 플레이어가 `owner`라고 볼 수 없다.
 목표는 이 `owner` 값을 플레이어 주소로 바꾸는 것이다.
-<hr />
+
+---
+
 이제 `changeOwner` 조건을 보자.
 ```solidity
 function changeOwner(address _owner) public {

@@ -32,18 +32,24 @@ contract Vault {
 }
 ```
 ## 배경지식
-<hr />
+
+---
+
 컨트랙트의 상태변수는 EVM storage에 저장된다. storage는 32바이트 단위의 슬롯으로 나뉘고, 일반적인 값 타입 상태변수는 선언 순서에 따라 slot 0부터 배치된다.
 Solidity는 작은 타입들을 같은 슬롯에 packing할 수 있다. 예를 들어 `bool`은 1바이트만 필요하다. 하지만 `bytes32`는 슬롯 하나를 전부 차지하는 32바이트 타입이므로, 앞의 `bool`이 slot 0에 들어가면 다음 `bytes32`는 slot 1에 저장된다.
 외부에서 특정 슬롯을 직접 읽을 때는 `web3.eth.getStorageAt`을 사용할 수 있다.
 ```javascript
 await web3.eth.getStorageAt(contractAddress, slotNumber)
 ```
-<hr />
+
+---
+
 `private`는 컨트랙트 코드 레벨에서의 접근 제한이다. 즉 다른 컨트랙트가 `password()` 같은 getter를 호출하거나 상속 컨트랙트에서 직접 접근하지 못하게 막는다.
 하지만 블록체인에 기록된 storage 자체를 숨기는 기능은 아니다. 모든 노드는 컨트랙트 storage를 가지고 있고, RPC를 통해 특정 슬롯의 raw value를 조회할 수 있다. 그래서 비밀값을 상태변수에 그대로 저장하면 `private`를 붙여도 실제로는 숨겨지지 않는다.
 ## 문제 코드 분석
-<hr />
+
+---
+
 storage 구조부터 보자.
 ```solidity
 contract Vault {
@@ -52,7 +58,9 @@ contract Vault {
 ```
 `locked`는 첫 번째 상태변수이므로 slot 0에 저장된다. `password`는 두 번째 상태변수이고 타입이 `bytes32`라서 slot 1에 저장된다.
 `private`은 자동 getter만 막고, `password` 값은 컨트랙트 storage에 평문으로 들어간다. `private` 때문에 자동 getter는 만들어지지 않지만 slot 1을 직접 읽으면 값은 그대로 나온다.
-<hr />
+
+---
+
 잠금 해제 조건은 단순하다.
 ```solidity
 function unlock(bytes32 _password) public {

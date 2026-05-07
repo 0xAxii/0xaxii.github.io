@@ -118,14 +118,18 @@ contract Engine is Initializable {
 }
 ```
 ## 배경지식
-<hr />
+
+---
+
 `Motorbike`는 일반적인 프록시처럼 실제 로직을 직접 들고 있지 않고, EIP-1967 implementation slot에 저장된 주소로 모든 호출을 넘긴다.
 ```solidity
 bytes32 internal constant _IMPLEMENTATION_SLOT =
     0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 ```
 이 슬롯은 `keccak256("eip1967.proxy.implementation") - 1`로 정해진 위치다. 프록시의 fallback은 이 슬롯에서 구현체 주소를 읽고 `delegatecall`한다. 따라서 사용자는 `Motorbike` 주소로 호출하지만, 실제 코드는 `Engine`에서 실행된다.
-<hr />
+
+---
+
 이 문제는 UUPS 스타일 업그레이드 흐름을 단순화해서 보여준다. 업그레이드 함수가 프록시가 아니라 구현체인 `Engine` 안에 있다.
 ```solidity
 function upgradeToAndCall(address newImplementation, bytes memory data) external payable {
@@ -134,7 +138,9 @@ function upgradeToAndCall(address newImplementation, bytes memory data) external
 }
 ```
 UUPS에서는 implementation 컨트랙트 자체도 독립된 컨트랙트다. 프록시를 통해 호출하면 프록시 storage가 바뀌지만, implementation 주소를 직접 호출하면 implementation 자신의 storage가 바뀐다.
-<hr />
+
+---
+
 `Engine.initialize()`는 `initializer` modifier를 사용한다.
 ```solidity
 function initialize() external initializer {
@@ -144,15 +150,21 @@ function initialize() external initializer {
 ```
 프록시 생성자에서는 `_logic.delegatecall(abi.encodeWithSignature("initialize()"))`로 초기화한다. 이때 `delegatecall`이므로 초기화 상태와 `upgrader`는 프록시의 storage에 기록된다. 반대로 `Engine` implementation 컨트랙트 자신의 storage는 초기화되지 않는다.
 implementation 주소를 직접 찾아서 `Engine.initialize()`를 호출하면, implementation 컨트랙트의 `upgrader`를 내 주소로 만들 수 있다.
-<hr />
+
+---
+
 원래 이 문제의 의도는 `Engine` implementation을 `selfdestruct`해서 프록시가 더 이상 동작하지 못하게 만드는 것이었다. 그런데 Cancun/Dencun 이후 EIP-6780 때문에 `selfdestruct`의 의미가 바뀌었다.
 현재 규칙에서는 `selfdestruct`가 같은 트랜잭션에서 생성된 컨트랙트에 실행될 때만 코드와 storage가 제거된다. 이미 이전 트랜잭션에서 존재하던 컨트랙트에 실행하면 잔액 전송 효과만 있고 코드는 삭제되지 않는다.
 즉 사이트에서 `Get new instance`를 먼저 누르고, 나중에 별도 트랜잭션으로 `Engine`에 `selfdestruct`를 실행하는 예전 방식은 현재 Sepolia에서 통과되지 않는다.
-<hr />
+
+---
+
 EIP-7702는 EOA가 특정 트랜잭션 동안 컨트랙트 코드처럼 동작할 수 있게 해준다. Foundry에서는 `vm.signAndAttachDelegation()`으로 authorization list를 붙일 수 있다.
 이 문제에서 필요한 것은 `Ethernaut.createLevelInstance()`와 `Engine.selfdestruct`를 같은 트랜잭션 안에서 실행하는 것이다. 단순 컨트랙트가 대신 호출하면 Ethernaut에는 그 컨트랙트가 player로 기록되므로 사이트 계정의 완료 표시와 연결되지 않는다. 그래서 EIP-7702로 내 EOA가 직접 코드 실행 능력을 얻고, 내 EOA 주소로 instance 생성과 exploit을 한 트랜잭션 안에서 처리한다.
 ## 문제 코드 분석
-<hr />
+
+---
+
 먼저 `Motorbike`의 프록시 구조를 보자.
 ```solidity
 fallback() external payable virtual {
@@ -160,7 +172,9 @@ fallback() external payable virtual {
 }
 ```
 `Motorbike`에는 사용자 함수가 없다. 호출 데이터가 들어오면 implementation slot에 저장된 `Engine` 주소로 그대로 `delegatecall`한다. 그래서 `Motorbike`를 일반 컨트랙트처럼 사용하면 실제로는 `Engine` 코드가 프록시 storage 위에서 실행된다.
-<hr />
+
+---
+
 이제 `Engine` implementation을 직접 초기화할 수 있는 부분을 보자.
 ```solidity
 function initialize() external initializer {
@@ -170,7 +184,9 @@ function initialize() external initializer {
 ```
 프록시 생성자에서 `initialize()`가 이미 호출된 것처럼 보이지만, 그 호출은 `delegatecall`이었다. 따라서 초기화된 쪽은 프록시 storage이고, implementation 컨트랙트 자신의 `Initializable` storage는 그대로 비어 있다.
 이 차이 때문에 `Engine` 주소를 직접 호출해서 `initialize()`를 다시 실행할 수 있다. 그러면 implementation 컨트랙트의 `upgrader`가 내 주소가 된다.
-<hr />
+
+---
+
 다음으로 `upgradeToAndCall`의 `delegatecall` 흐름을 보자.
 ```solidity
 function _upgradeToAndCall(address newImplementation, bytes memory data) internal {
@@ -183,7 +199,9 @@ function _upgradeToAndCall(address newImplementation, bytes memory data) interna
 ```
 `upgradeToAndCall()`은 `newImplementation`을 implementation slot에 저장한 뒤, 넘겨받은 `data`를 `newImplementation.delegatecall(data)`로 실행한다.
 implementation 컨트랙트를 직접 호출한 상태에서 이 함수가 실행되면, delegatecall의 context는 `Engine` implementation 자신이다. 따라서 `newImplementation`에 `selfdestruct` 함수가 있고 그 함수를 delegatecall하면, 파괴 대상은 `newImplementation`이 아니라 호출 context인 `Engine`이 된다.
-<hr />
+
+---
+
 현재 Ethernaut의 `MotorbikeFactory`는 instance의 engine 주소에 코드가 없어졌는지를 본다.
 ```solidity
 function validateInstance(address payable _instance, address _player) public override returns (bool) {

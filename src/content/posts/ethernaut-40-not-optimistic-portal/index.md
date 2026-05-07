@@ -292,7 +292,9 @@ contract NotOptimisticPortal is ERC20, ReentrancyGuard{
 }
 ```
 ## 배경지식
-<hr />
+
+---
+
 EVM에서 외부 함수 호출은 calldata의 앞 4바이트로 어떤 함수를 실행할지 고른다. 이 값은 함수 시그니처 문자열을 `keccak256`으로 해싱한 뒤 앞 4바이트만 잘라 만든다.
 아래 두 함수 시그니처는 앞 4바이트가 같다.
 ```bash
@@ -303,18 +305,24 @@ $ cast sig "transferOwnership_____610165642(address)"
 ```
 `_executeOperation`은 일반 메시지 실행일 때 calldata 앞 4바이트가 `0x3a69197e`인지 확인한다. 원래 의도는 `onMessageReceived(bytes)`만 허용하는 것이지만, selector만 검사하면 같은 selector를 가진 다른 함수도 통과한다.
 `transferOwnership_____610165642(address)` 호출 데이터도 메시지 실행 제한을 통과할 수 있다.
-<hr />
+
+---
+
 CEI는 Checks-Effects-Interactions 순서로 상태 검증과 상태 변경을 먼저 끝내고 외부 호출을 나중에 하라는 패턴이다. 여기서는 반대로 되어 있다.
 `executeMessage`는 메시지 포함 proof를 검증하기 전에 `_messageReceivers`를 순회하면서 외부 호출을 먼저 실행한다. 외부 호출이 portal의 권한 상태나 L2 state root buffer를 바꿀 수 있으면, 검증이 실행되는 시점의 기준 데이터 자체가 바뀐다.
 즉 이 문제는 단순한 reentrancy attack이 아니라, 검증 전 외부 호출 때문에 검증 로직이 참조할 상태를 공격자가 먼저 준비할 수 있는 문제다.
-<hr />
+
+---
+
 `_verifyMessageInclusion`은 Optimism의 `Lib_SecureMerkleTrie`를 사용한다. Secure trie에서는 원래 key를 그대로 trie path로 쓰지 않고 `keccak256(key)`를 path로 사용한다.
 이 문제에서 검증은 두 단계다.
 1. state trie에서 `L2_TARGET` 계정이 존재하는지 확인한다.
 2. 그 계정의 `storageRoot`를 꺼내서 storage trie에 `messageSlot -> 0x01`이 존재하는지 확인한다.
 계정 state는 RLP로 `[nonce, balance, storageRoot, codeHash]` 형태다. storage proof는 `messageSlot`을 key로 하는 leaf 하나만 가진 trie로 만들 수 있고, state proof도 `L2_TARGET` 계정 leaf 하나만 가진 trie로 만들 수 있다. 루트는 그 leaf node의 `keccak256`이 된다.
 ## 문제 코드 분석
-<hr />
+
+---
+
 Factory의 검증 조건부터 보자.
 ```solidity
 function validateInstance(address payable _instance, address) public view override returns (bool) {
@@ -323,7 +331,9 @@ function validateInstance(address payable _instance, address) public view overri
 }
 ```
 목표는 portal 토큰의 `totalSupply()`를 0보다 크게 만드는 것이다. `executeMessage`에서 `_amount != 0`이면 `_mint(_tokenReceiver, _amount)`가 실행되므로, 결국 유효한 withdrawal 메시지를 통과시켜 mint를 일으키면 된다.
-<hr />
+
+---
+
 먼저 `executeMessage`의 순서를 보자.
 ```solidity
 function executeMessage(
@@ -366,7 +376,9 @@ function executeMessage(
 ```
 `withdrawalHash`를 계산하고 재사용 여부만 확인한 뒤, proof 검증 전에 `_executeOperation`을 먼저 실행한다. 이 외부 호출 안에서 portal의 `owner`, `sequencer`, `l2StateRoots`를 바꿀 수 있다면 뒤의 `_verifyMessageInclusion`은 공격자가 준비한 상태를 기준으로 통과할 수 있다.
 `nonReentrant` 때문에 같은 `executeMessage`로 다시 들어가는 방식은 막히지만, 다른 함수 호출은 막지 않는다. 따라서 콜백에서 `updateSequencer_____76439298743`와 `submitNewBlock_____37278985983`를 호출하는 흐름은 가능하다.
-<hr />
+
+---
+
 다음으로 `_computeMessageSlot`을 보자.
 ```solidity
 function _computeMessageSlot(
@@ -396,7 +408,9 @@ function _computeMessageSlot(
 루프 조건이 `i < _messageReceivers.length - 1`이다. 배열이 2개라면 0번 원소만 해시에 들어가고 1번 원소는 빠진다.
 검증되는 메시지는 첫 번째 operation만 포함한 메시지인데, 실제 실행은 첫 번째와 두 번째 operation을 모두 실행한다. 이 때문에 검증 대상과 실제 실행 대상이 달라진다.
 공격에서는 0번 operation을 `transferOwnership_____610165642(address(this))`로 두고, 1번 operation을 공격 컨트랙트의 `onMessageReceived(bytes)` 콜백으로 둔다. proof는 0번 operation까지만 포함한 `withdrawalHash`에 맞춰 만들고, 실제 실행에서는 1번 콜백까지 실행시킨다.
-<hr />
+
+---
+
 selector 검사도 문제가 된다.
 ```solidity
 function _executeOperation(
@@ -424,7 +438,9 @@ modifier onlyOwner() {
 ```
 `_executeOperation`은 `target.call(callData)`를 실행하고, target이 portal 자신이면 `msg.sender`는 portal 주소가 된다. `onlyOwner`는 `msg.sender == address(this)`를 허용하므로, portal이 자기 자신에게 `transferOwnership`을 호출하면 소유권 이전이 통과한다.
 즉 첫 번째 메시지 실행만으로 공격 컨트랙트를 `owner`로 만들 수 있다.
-<hr />
+
+---
+
 owner를 잡은 뒤에는 sequencer와 state root를 바꿀 수 있다.
 ```solidity
 function updateSequencer_____76439298743(address newSequencer) external onlyOwner {
@@ -438,7 +454,9 @@ function submitNewBlock_____37278985983(bytes memory rlpBlockHeader) external on
 ```
 첫 번째 operation으로 공격 컨트랙트가 owner가 되면, 두 번째 콜백에서 `updateSequencer`를 호출해 자신을 sequencer로 만들 수 있다. 그 다음 `submitNewBlock`으로 원하는 `stateRoot`를 가진 새 block header를 제출한다.
 `executeMessage`는 proof 검증 전에 콜백을 실행한다. 공격 코드는 `bufferIndex = target.bufferCounter()`를 미리 저장해두고, 콜백에서 `submitNewBlock`을 호출해 바로 그 index에 공격자가 만든 `stateRoot`를 기록한다. 이후 `_verifyMessageInclusion`은 방금 기록한 root를 기준으로 proof를 검증한다.
-<hr />
+
+---
+
 마지막으로 proof 검증을 보자.
 ```solidity
 function _verifyMessageInclusion(

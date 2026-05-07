@@ -52,17 +52,25 @@ contract Denial {
 }
 ```
 ## 배경지식
-<hr />
+
+---
+
 Solidity에서 `address.call{value: amount}("")`처럼 별도 gas 값을 지정하지 않으면 호출 시점에 전달 가능한 gas 대부분을 상대 컨트랙트로 넘긴다. 상대 컨트랙트의 `receive`나 `fallback` 함수가 복잡한 연산을 하거나 끝나지 않는 루프를 돌면, 호출한 쪽의 남은 gas까지 소모시킬 수 있다.
 `Denial.withdraw()`는 `partner.call(...)`의 반환값을 확인하지 않는다. 다만 이 문제에서는 반환값보다 gas가 더 직접적이다. 외부 호출 도중 gas가 전부 소모되면, 이후 줄인 `owner.transfer(...)`까지 도달하지 못한다.
-<hr />
+
+---
+
 `transfer`는 수신자에게 2300 gas만 전달한다. 예전에는 단순 이더 전송에 안전한 방식처럼 자주 설명됐지만, 여기서는 앞의 `call`과 대비된다.
 `withdraw()`는 먼저 `partner`에게 `call`을 하고, 그 다음 `owner`에게 `transfer`를 한다. 앞의 `call`에서 gas를 다 써버리면 뒤의 `transfer`는 실행될 수 없다. 즉 이 문제의 목표는 이더를 빼내는 것이 아니라, `owner`의 출금을 계속 실패하게 만드는 것이다.
-<hr />
+
+---
+
 이 문제는 reentrancy attack으로 잔액을 빼내는 전형적인 패턴과 조금 다르다. `partner.call(...)`이 먼저 실행되기 때문에 처음에는 reentrancy attack을 떠올릴 수 있지만, 레벨 조건은 "컨트랙트에 자금이 남아 있는데 owner가 출금하지 못하게 만들기"다.
 공격자는 `partner`가 된 뒤, 이더를 받을 때 남은 gas를 소모하는 컨트랙트를 준비하면 된다. 이 흐름으로 `withdraw()` 전체를 gas 부족으로 실패시키는 DoS를 만들 수 있다.
 ## 문제 코드 분석
-<hr />
+
+---
+
 먼저 누구나 바꿀 수 있는 `partner`를 보자.
 ```solidity
 function setWithdrawPartner(address _partner) public {
@@ -71,7 +79,9 @@ function setWithdrawPartner(address _partner) public {
 ```
 `setWithdrawPartner`에는 권한 체크가 없다. 아무 주소나 `partner`로 등록할 수 있고, 컨트랙트 주소도 등록할 수 있다.
 따라서 공격자는 악의적인 `receive` 함수를 가진 컨트랙트를 배포하고, 그 주소를 `partner`로 등록하면 된다. 이후 `withdraw()`가 호출될 때 제어 흐름이 공격 컨트랙트로 넘어온다.
-<hr />
+
+---
+
 이제 외부 호출이 먼저 실행되는 구조를 보자.
 ```solidity
 function withdraw() public {
@@ -84,7 +94,9 @@ function withdraw() public {
 ```
 `withdraw()`는 잔액의 1%를 계산한 뒤 `partner`에게 먼저 이더를 보낸다. 그 다음에야 `owner`에게 같은 금액을 보낸다.
 외부 호출이 상태 업데이트보다 먼저 나오는 것도 위험하지만, 여기서는 `partner.call`이 gas를 제한하지 않는 문제가 더 직접적이다. 공격 컨트랙트의 `receive`가 gas를 계속 소비하면 `owner.transfer(amountToSend)`에 도달하지 못한다.
-<hr />
+
+---
+
 마지막으로 반환값을 무시하는 `call`을 보자.
 ```solidity
 partner.call{value: amountToSend}("");

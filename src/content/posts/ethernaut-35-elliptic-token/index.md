@@ -80,7 +80,9 @@ contract EllipticToken is Ownable, ERC20 {
 }
 ```
 ## 배경지식
-<hr />
+
+---
+
 ECDSA에서는 개인키를 `d`, 공개키를 Q=dG 라고 하자. 메시지 해시를 `e`라고 할 때, 서명은 보통 `(r, s, v)`로 표현된다. 여기서 `r`은 nonce `k`로 만든 점 R=kG의 x좌표에서 나오고, `s`는 다음 식으로 만들어진다.
 $$
 s \equiv k^{-1}(e + rd) \pmod n
@@ -94,7 +96,9 @@ $$
 R' = u_1G + u_2Q
 $$
 검증은 R'의 x좌표에서 얻은 값이 `r`과 같은지 확인하는 방식이다. 즉 ECDSA 검증은 최종적으로 “이 `(e, r, s)` 조합이 공개키 Q에 대해 같은 점을 만들 수 있는가”를 보는 구조다.
-<hr />
+
+---
+
 ECDSA에서 메시지 해시 `e`를 애플리케이션이 안전하게 고정하지 않으면 문제가 생긴다. 공격자가 검증식에 들어갈 `e`까지 고를 수 있으면, 개인키 없이도 어떤 공개키 Q에 대해 유효한 `(e, r, s)` 조합을 만들 수 있다.
 임의의 `u1`, `u2`를 고르고 다음 점을 계산한다고 하자.
 $$
@@ -108,11 +112,15 @@ $$
 e \equiv r u_1 u_2^{-1} \pmod n
 $$
 그러면 검증 과정에서는 `e / s = u1`, `r / s = u2`가 되므로 다시 같은 R을 만들게 된다. 그러면 `(r, s)`는 메시지 해시 `e`에 대한 유효한 서명처럼 보인다. 특정 의미를 가진 문서에 서명한 것이 아니라, 검증식을 만족하는 값을 역으로 맞춘 것이다.
-<hr />
+
+---
+
 정상적인 permit이라면 “누가, 누구에게, 얼마를, 어떤 컨트랙트에서, 어떤 chain에서, 어떤 nonce로 허락하는가”가 모두 메시지에 들어가야 한다. ERC-2612나 EIP-712가 이런 구조를 쓰는 이유가 이 때문이다.
 `permit()`은 토큰 소유자 서명을 검증할 때 `bytes32(amount)` 자체를 메시지 해시로 쓴다. `amount`는 사용자가 고르는 값인데, 이 값이 곧 ECDSA digest가 된다. 즉 permit의 의미와 서명 digest 사이에 도메인 분리가 없다.
 ## 문제 코드 분석
-<hr />
+
+---
+
 먼저 `redeemVoucher()`에서 얻을 수 있는 정보를 보자.
 ```solidity
 function redeemVoucher(
@@ -134,7 +142,9 @@ function redeemVoucher(
 ```
 `redeemVoucher()`는 `voucherHash`에 대해 Bob의 서명과 receiver의 서명을 확인한다. 문제 설명에 따르면 Alice는 이미 voucher를 redeem했다. 해당 트랜잭션 calldata에는 Alice의 `receiverSignature`가 들어 있고, `amount`, `receiver`, `salt`로 `voucherHash`도 다시 계산할 수 있다.
 이 정보가 있으면 오프체인에서 Alice의 공개키 Q를 복구할 수 있다. Solidity의 `ECDSA.recover`는 주소만 돌려주지만, 같은 `(voucherHash, receiverSignature)`를 오프체인 ECDSA 라이브러리에 넣으면 공개키까지 얻을 수 있다. 여기서 얻은 Q가 위조 서명을 만들 때 필요한 공개키다.
-<hr />
+
+---
+
 이제 `permit()`에서 `tokenOwner`를 복구하는 부분을 보자.
 ```solidity
 function permit(uint256 amount, address spender, bytes memory tokenOwnerSignature, bytes memory spenderSignature)
@@ -155,7 +165,9 @@ function permit(uint256 amount, address spender, bytes memory tokenOwnerSignatur
 ```
 여기서 `tokenOwner`는 `ECDSA.recover(bytes32(amount), tokenOwnerSignature)`로 계산된다. 즉 `amount`가 단순 승인 수량이 아니라 ECDSA 메시지 해시 역할까지 한다.
 공격자는 Alice의 공개키 Q에 대해 유효한 `(e, r, s, v)`를 만든 뒤, `amount = uint256(e)`로 넣으면 된다. 그러면 `ECDSA.recover(bytes32(amount), tokenOwnerSignature)`는 Alice 주소를 반환한다. 컨트랙트는 Alice가 `amount`만큼 permit을 발급했다고 착각한다.
-<hr />
+
+---
+
 `spenderSignature` 쪽은 직접 만들 수 있다.
 ```solidity
 bytes32 permitAcceptHash = keccak256(abi.encodePacked(tokenOwner, spender, amount));
@@ -163,7 +175,9 @@ require(ECDSA.recover(permitAcceptHash, spenderSignature) == spender, InvalidSpe
 ```
 두 번째 서명은 spender가 permit을 받아들였는지 확인하는 용도다. 우리는 spender를 player 주소로 넣을 것이고 player의 개인키를 가지고 있다. `keccak256(abi.encodePacked(ALICE, player, amount))`에 대한 서명은 직접 만들 수 있다.
 즉 필요한 것은 Alice의 개인키가 아니라, Alice로 복구되는 `tokenOwnerSignature`와 player가 직접 만든 `spenderSignature`다.
-<hr />
+
+---
+
 마지막으로 `usedHashes` 체크를 보자.
 ```solidity
 bytes32 permitHash = keccak256(abi.encode(amount));

@@ -138,14 +138,20 @@ contract PoolToken is ERC20, Ownable {
 }
 ```
 ## 배경지식
-<hr />
+
+---
+
 이 문제에는 두 종류의 토큰이 나온다. `depositToken`은 처음 플레이어가 들고 있는 `Pool Deposit Token`, 즉 PDT이고, `wrappedToken`은 `Pool`에 예치했을 때 새로 민팅되는 내부 잔고 토큰이다.
 `deposit()`의 교환 규칙은 단순하다. `0.001 ether`를 넣으면 `wrappedToken` 10개를 받고, PDT 1개를 넣으면 `wrappedToken` 1개를 받는다. 플레이어는 처음에 PDT 5개만 있으므로 정상적으로는 PDT 5개와 ETH 예치를 합쳐도 `wrappedToken`은 \$10+5=15\$개뿐이다.
-<hr />
+
+---
+
 `withdrawAll()`은 `nonReentrant`가 붙어 있지만, 함수 내부에서 이더를 돌려줄 때 `call`을 사용한다. 수신자가 컨트랙트라면 이 시점에 `receive()`가 실행된다.
 이더를 보내는 `call`은 `wrappedToken`을 burn하기 전에 실행된다. 즉 콜백이 실행되는 동안에는 아직 기존 `wrappedToken` 잔고가 남아 있다. `nonReentrant`는 같은 `withdrawAll()`로 다시 들어오는 reentrancy attack만 막고, `deposit()`, `lockDeposits()`, `makeBet()` 호출까지 막지는 않는다.
 ## 문제 코드 분석
-<hr />
+
+---
+
 먼저 베팅 조건을 보자.
 ```solidity
 function makeBet(address bettor_) external {
@@ -157,7 +163,9 @@ function makeBet(address bettor_) external {
 }
 ```
 `makeBet()`은 `bettor_`를 등록하지만, 조건 검사는 `bettor_`가 아니라 `msg.sender` 기준으로 한다. 플레이어가 직접 조건을 만족할 필요는 없다. 공격 컨트랙트가 `msg.sender`로서 `wrappedToken` 20개 이상과 `depositsLocked == true`를 만족하면, `bettor_`에는 플레이어 주소를 넣어 플레이어를 bettor로 등록할 수 있다.
-<hr />
+
+---
+
 이제 `deposit()`의 교환 비율을 보자.
 ```solidity
 if (msg.value == 0.001 ether) {
@@ -175,7 +183,9 @@ if (value_ > 0) {
 ```
 한 번의 `deposit()`에서 ETH와 PDT를 동시에 예치할 수 있다. 공격 컨트랙트가 `0.001 ether`와 PDT 5개를 넣으면 `wrappedToken` 15개를 받는다.
 하지만 목표는 20개다. 처음 가진 PDT가 5개뿐이므로 일반적인 흐름에서는 추가 5개를 만들 방법이 없어 보인다. 여기서 `withdrawAll()`의 순서가 필요하다.
-<hr />
+
+---
+
 마지막으로 `withdrawAll()`의 순서를 보자.
 ```solidity
 function withdrawAll() external nonReentrant {

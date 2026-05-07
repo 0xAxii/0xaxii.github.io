@@ -74,7 +74,9 @@ contract Forger is ERC20 {
 }
 ```
 ## 배경지식
-<hr />
+
+---
+
 Ethereum에서 일반적으로 보는 ECDSA 서명은 `(r, s, v)`를 이어 붙인 65바이트 형식이다. `r`과 `s`는 각각 32바이트이고, `v`는 복구할 공개키 후보를 고르는 1바이트 값이다. 보통 Ethereum 서명에서는 `v`가 27 또는 28로 표현된다.
 문제에 주어진 서명을 나눠보면 다음과 같다.
 ```plain text
@@ -82,7 +84,9 @@ r = 0xf73465952465d0595f1042ccf549a9726db4479af99c27fcf826cd59c3ea7809
 s = 0x402f4f4be134566025f4db9d4889f73ecb535672730bb98833dafb48cc0825fb
 v = 0x1c = 28
 ```
-<hr />
+
+---
+
 OpenZeppelin `ECDSA.recover`는 65바이트 `(r, s, v)` 형식뿐 아니라 EIP-2098의 64바이트 compact signature도 처리한다. compact signature는 `(r, vs)`로 구성된다. 여기서 `vs`는 `s`의 최상위 비트에 `v`의 parity를 같이 넣은 값이다.
 `v=27`이면 parity가 0이고, `v=28`이면 parity가 1이다. 이 문제의 서명은 `s`의 최상위 비트를 1로 세워서 다음 compact 형식으로도 표현할 수 있다.
 ```plain text
@@ -90,7 +94,9 @@ vs = 0xc02f4f4be134566025f4db9d4889f73ecb535672730bb98833dafb48cc0825fb
 ```
 65바이트 서명과 64바이트 서명의 바이트열은 서로 다르지만, `ECDSA.recover(messageHash, signature)`의 결과는 같은 owner다.
 ## 문제 코드 분석
-<hr />
+
+---
+
 먼저 mint 메시지를 보자.
 ```solidity
 bytes32 messageHash = keccak256(abi.encode(
@@ -104,7 +110,9 @@ address signer = ECDSA.recover(messageHash, signature);
 ```
 민트 권한은 `receiver`, `amount`, `salt`, `deadline`을 `abi.encode`한 뒤 `keccak256`으로 해시한 메시지에 대해 검증된다. 문제 주석에는 이미 owner가 서명한 값들이 모두 주어져 있다.
 즉 우리는 새 메시지를 만들 필요가 없다. 주어진 `receiver`, `amount`, `salt`, `deadline`을 그대로 넣고, owner로 복구되는 서명만 제출하면 된다.
-<hr />
+
+---
+
 이제 `signatureUsed` 체크를 보자.
 ```solidity
 require(!signatureUsed[keccak256(signature)], SignatureUsed());
@@ -113,7 +121,9 @@ signatureUsed[keccak256(signature)] = true;
 ```
 중복 사용 방지는 메시지 해시나 민트 파라미터가 아니라 `signature` 바이트열 자체의 해시로 처리된다. 같은 의미의 서명이라도 바이트 표현이 다르면 서로 다른 key로 기록된다.
 65바이트 `(r, s, v)` 서명과 64바이트 `(r, vs)` 서명은 같은 메시지에 대해 같은 signer를 복구하지만, `keccak256(signature)` 값은 다르다. 따라서 둘 다 `signatureUsed`를 통과할 수 있다.
-<hr />
+
+---
+
 목표 조건은 단순하다.
 ```solidity
 _mint(receiver, amount);

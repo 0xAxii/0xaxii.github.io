@@ -48,7 +48,9 @@ contract AlienCodex is Ownable {
 }
 ```
 ## 배경지식
-<hr />
+
+---
+
 문제 컨트랙트는 `Ownable`을 상속한다. `Ownable-05.sol`에서는 `_owner`가 상태변수로 먼저 선언되어 있다.
 ```solidity
 contract Ownable {
@@ -94,7 +96,9 @@ slot 0: contact + _owner
 slot 1: codex.length
 keccak256(abi.encode(1)) + i: codex[i]
 ```
-<hr />
+
+---
+
 동적 배열은 배열의 길이와 실제 원소가 같은 위치에 저장되지 않는다. 배열 변수가 slot `p`에 있다면 slot `p`에는 배열의 길이가 저장되고, 실제 원소는 다음 위치부터 저장된다.
 ```solidity
 arr[i] storage slot = keccak256(abi.encode(p)) + i (mod 2^256)
@@ -113,7 +117,9 @@ $$
 i = 2^{256} - uint256(keccak256(abi.encode(1)))
 $$
 Solidity 코드로는 `type(uint256).max - uint256(keccak256(abi.encode(1))) + 1`로 계산할 수 있다.
-<hr />
+
+---
+
 문제 컨트랙트는 `pragma solidity ^0.5.0`을 사용한다. Solidity 0.8 이전에는 산술 overflow/underflow가 자동으로 revert되지 않는다.
 `codex.length`가 0인 상태에서 `retract()`를 호출하면 다음 코드가 실행된다.
 ```solidity
@@ -122,7 +128,9 @@ codex.length--;
 그러면 0에서 1을 빼면서 revert되지 않고 값이 `uint256` 범위 안에서 순환한다. 결과적으로 `codex.length`는 \$2\^\{256\}-1\$이 된다.
 이제 `revise(i, _content)`에서 사실상 모든 `uint256` 인덱스를 사용할 수 있으므로, 위에서 계산한 인덱스로 slot 0을 덮어쓸 수 있다.
 ## 문제 코드 분석
-<hr />
+
+---
+
 먼저 `contacted` 제한을 보자.
 ```solidity
 modifier contacted() {
@@ -136,7 +144,9 @@ function makeContact() public {
 ```
 `record`, `retract`, `revise`는 모두 `contacted`를 통과해야 한다. 즉 먼저 `makeContact()`를 호출해서 `contact`를 `true`로 만들어야 한다.
 이 제한 자체는 강한 권한 체크가 아니다. 누구나 `makeContact()`를 호출할 수 있기 때문에, 익스플로잇의 첫 단계로 한 번 호출하면 된다.
-<hr />
+
+---
+
 이제 배열 길이를 조작하는 부분을 보자.
 ```solidity
 function retract() public contacted {
@@ -152,7 +162,9 @@ await web3.eth.getStorageAt("0x1a9eDfD05c3687AeD6Bb36B86C657c1c8307fbc3", 1)
 // '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 ```
 배열 길이가 최대치가 되었으므로 `revise()`의 인덱스 검사는 사실상 의미가 없어진다.
-<hr />
+
+---
+
 마지막으로 임의 slot 쓰기가 가능한 부분을 보자.
 ```solidity
 function revise(uint256 i, bytes32 _content) public contacted {

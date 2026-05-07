@@ -77,21 +77,29 @@ contract SwappableToken is ERC20 {
 }
 ```
 ## 배경지식
-<hr />
+
+---
+
 DEX는 decentralized exchange, 즉 탈중앙화 거래소를 말한다. 중앙화 거래소는 보통 호가창을 기준으로 매수자와 매도자를 매칭하지만, AMM 방식의 DEX는 컨트랙트 안에 들어있는 토큰 풀과 가격 공식으로 교환량을 계산한다.
 예를 들어 A 토큰과 B 토큰이 풀에 들어있다면, 스왑 가격은 풀 내부의 A/B 비율에 영향을 받는다. 그래서 스왑 한 번이 끝날 때마다 풀의 잔액이 바뀌고, 다음 스왑의 가격도 달라진다.
-<hr />
+
+---
+
 실제 AMM에서는 보통 `x * y = k` 같은 불변식을 두고, 수수료와 슬리피지까지 고려해서 한 번의 거래가 풀을 비정상적으로 망가뜨리지 못하게 한다.
 그런데 이 문제의 `Dex`는 단순히 현재 풀 잔액의 비율만 사용한다.
 $$
 swapAmount = amount \times \frac{balance(to)}{balance(from)}
 $$
 이 공식은 스왑 결과로 바뀔 잔액을 고려하지 않는다. 공격자가 양쪽 방향으로 계속 스왑하면, 매번 바뀐 풀 비율을 이용해서 점점 더 많은 토큰을 받아낼 수 있다.
-<hr />
+
+---
+
 Solidity의 `uint256` 나눗셈은 소수점 이하를 버린다. 예를 들어 \$20 times 110 / 90\$은 수학적으로 약 \$24.44\$지만, Solidity에서는 `24`가 된다.
 문제는 소수점 버림 자체보다 잘못된 가격 공식에 있다. 다만 계산 결과가 정수로 잘리기 때문에 실제 스왑 수량을 손으로 따라갈 때는 항상 버림을 적용해야 한다.
 ## 문제 코드 분석
-<hr />
+
+---
+
 먼저 스왑 가능한 토큰 제한을 보자.
 ```solidity
 require((from == token1 && to == token2) || (from == token2 && to == token1), "Invalid tokens");
@@ -99,7 +107,9 @@ require(IERC20(from).balanceOf(msg.sender) >= amount, "Not enough to swap");
 ```
 `swap`은 `token1 -> token2` 또는 `token2 -> token1` 방향만 허용한다. 그래서 임의의 악성 토큰을 끼워 넣는 방식은 이 문제에서는 막혀 있다. 그 방식은 다음 문제인 Dex Two의 포인트에 가깝다.
 두 번째 `require`는 사용자가 `from` 토큰을 충분히 가지고 있는지만 확인한다. 컨트랙트가 `to` 토큰을 충분히 가지고 있는지 별도로 확인하지는 않지만, 마지막 `transferFrom`에서 잔액보다 많이 보내려 하면 ERC20 전송이 실패한다. 마지막 스왑에서는 받을 토큰의 컨트랙트 잔액을 넘지 않도록 `amount`를 맞춰야 한다.
-<hr />
+
+---
+
 이제 가격 계산식을 보자.
 ```solidity
 function getSwapPrice(address from, address to, uint256 amount) public view returns (uint256) {
@@ -109,7 +119,9 @@ function getSwapPrice(address from, address to, uint256 amount) public view retu
 가격은 DEX가 가진 `to` 토큰 잔액을 `from` 토큰 잔액으로 나눈 비율로 정해진다.
 처음에는 DEX가 `token1 = 100`, `token2 = 100`을 가지고 있으므로 `token1` 10개를 넣으면 `token2` 10개를 받는다. 이 스왑 이후 DEX 잔액은 `token1 = 110`, `token2 = 90`이 된다.
 이제 반대로 `token2` 20개를 넣으면 계산은 `20 * 110 / 90 = 24`가 된다. 사용자는 처음보다 더 많은 `token1`을 받아간다. 이 과정을 반복하면 한쪽 풀 잔액이 빠르게 줄어든다.
-<hr />
+
+---
+
 마지막으로 승인 흐름을 보자.
 ```solidity
 function approve(address spender, uint256 amount) public {
