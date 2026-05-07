@@ -3,10 +3,20 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils.ts";
 
-// // Retrieve posts and sort them by publication date
-async function getRawSortedPosts() {
+type PostEntry = CollectionEntry<"posts">;
+
+function isBuildablePost(data: PostEntry["data"]) {
+	return import.meta.env.PROD ? data.draft !== true : true;
+}
+
+function isListedPost(data: PostEntry["data"]) {
+	return data.listed !== false;
+}
+
+// Retrieve posts and sort them by publication date.
+async function getRawSortedPosts({ includeUnlisted = false } = {}) {
 	const allBlogPosts = await getCollection("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+		return isBuildablePost(data) && (includeUnlisted || isListedPost(data));
 	});
 
 	const sorted = allBlogPosts.sort((a, b) => {
@@ -15,6 +25,10 @@ async function getRawSortedPosts() {
 		return dateA > dateB ? -1 : 1;
 	});
 	return sorted;
+}
+
+export async function getRoutablePosts() {
+	return await getRawSortedPosts({ includeUnlisted: true });
 }
 
 export async function getSortedPosts() {
@@ -53,7 +67,7 @@ export type Tag = {
 
 export async function getTagList(): Promise<Tag[]> {
 	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+		return isBuildablePost(data) && isListedPost(data);
 	});
 
 	const countMap: { [key: string]: number } = {};
@@ -80,7 +94,7 @@ export type Category = {
 
 export async function getCategoryList(): Promise<Category[]> {
 	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+		return isBuildablePost(data) && isListedPost(data);
 	});
 	const defaultCategories = [
 		"개발",
