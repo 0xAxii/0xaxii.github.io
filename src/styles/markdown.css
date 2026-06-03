@@ -52,6 +52,9 @@
 
     .post-language-switch__button {
         appearance: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         min-width: 3rem;
         height: 2rem;
         padding: 0 0.875rem;
@@ -62,6 +65,7 @@
         font-size: 0.875rem;
         font-weight: 700;
         line-height: 2rem;
+        text-decoration: none;
         text-align: center;
         cursor: pointer;
         transition:
@@ -78,9 +82,16 @@
         transform: scale(0.96);
     }
 
+    &[data-article-language="ko"] .post-language-switch__button[data-post-language-link="ko"],
+    &[data-article-language="en"] .post-language-switch__button[data-post-language-link="en"],
     .post-language-switch__button.is-active {
         background: var(--primary);
         color: var(--deep-text);
+    }
+
+    &[data-article-language="ko"] [data-post-language-panel="en"],
+    &[data-article-language="en"] [data-post-language-panel="ko"] {
+        display: none;
     }
 
     [data-post-language-panel][hidden] {

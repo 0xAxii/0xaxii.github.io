@@ -15,28 +15,75 @@ import { profileConfig, siteConfig } from "../../config";
 import { formatDateToYYYYMMDD } from "../../utils/date-utils";
 
 export async function getStaticPaths() {
+	const easyVBoxSlug = "actf-easyvbox-writeup";
 	const blogEntries = await getRoutablePosts();
 	const listedEntries = await getSortedPosts();
 	const listedEntryBySlug = new Map(
 		listedEntries.map((entry) => [entry.slug, entry]),
 	);
 
-	return blogEntries.map((entry) => ({
+	const paths = blogEntries.map((entry) => ({
 		params: { slug: entry.slug },
-		props: { entry: listedEntryBySlug.get(entry.slug) ?? entry },
+		props: {
+			entry: listedEntryBySlug.get(entry.slug) ?? entry,
+			articleLanguage: entry.slug === easyVBoxSlug ? "ko" : undefined,
+		},
 	}));
+
+	const easyVBoxEntry = blogEntries.find((entry) => entry.slug === easyVBoxSlug);
+	if (easyVBoxEntry) {
+		const entry = listedEntryBySlug.get(easyVBoxEntry.slug) ?? easyVBoxEntry;
+		paths.push(
+			{
+				params: { slug: `${easyVBoxSlug}/kr` },
+				props: { entry, articleLanguage: "ko" },
+			},
+			{
+				params: { slug: `${easyVBoxSlug}/en` },
+				props: { entry, articleLanguage: "en" },
+			},
+		);
+	}
+
+	return paths;
 }
 
-const { entry } = Astro.props;
+const EASYVBOX_SLUG = "actf-easyvbox-writeup";
+
+const { entry, articleLanguage = "" } = Astro.props;
 const { Content, headings } = await entry.render();
 
 const { remarkPluginFrontmatter } = await entry.render();
+
+const activeLanguage = entry.slug === EASYVBOX_SLUG ? articleLanguage || "ko" : entry.data.lang;
+const pageLang = activeLanguage || entry.data.lang || siteConfig.lang;
+const pageDescription =
+	entry.slug === EASYVBOX_SLUG && activeLanguage === "en"
+		? "A writeup for the EasyVBox VM escape challenge targeting VirtualBox 7.2.4's VMSVGA 3D path."
+		: entry.data.description;
+const pageSlug =
+	entry.slug === EASYVBOX_SLUG && (activeLanguage === "ko" || activeLanguage === "en")
+		? `${entry.slug}/${activeLanguage === "en" ? "en" : "kr"}`
+		: entry.slug;
+
+function getLanguageHeadings() {
+	if (entry.slug !== EASYVBOX_SLUG) return headings;
+
+	const englishStart = headings.findIndex((heading) => heading.slug === "1-overview");
+	if (englishStart < 0) return headings;
+
+	return activeLanguage === "en"
+		? headings.slice(englishStart)
+		: headings.slice(0, englishStart);
+}
+
+const visibleHeadings = getLanguageHeadings();
 
 const jsonLd = {
 	"@context": "https://schema.org",
 	"@type": "BlogPosting",
 	headline: entry.data.title,
-	description: entry.data.description || entry.data.title,
+	description: pageDescription || entry.data.title,
 	keywords: entry.data.tags,
 	author: {
 		"@type": "Person",
@@ -44,13 +91,11 @@ const jsonLd = {
 		url: Astro.site,
 	},
 	datePublished: formatDateToYYYYMMDD(entry.data.published),
-	inLanguage: entry.data.lang
-		? entry.data.lang.replace("_", "-")
-		: siteConfig.lang.replace("_", "-"),
+	inLanguage: pageLang.replace("_", "-"),
 	// TODO include cover image here
 };
 ---
-<MainGridLayout banner={entry.data.image} title={entry.data.title} description={entry.data.description} lang={entry.data.lang} setOGTypeArticle={true} headings={headings}>
+<MainGridLayout banner={entry.data.image} title={entry.data.title} description={pageDescription} lang={pageLang} setOGTypeArticle={true} headings={visibleHeadings}>
     <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
     <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4">
         <div id="post-container" class:list={["card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full ",
@@ -108,11 +153,11 @@ const jsonLd = {
             }
 
 
-            <Markdown class="mb-6 markdown-content onload-animation">
+            <Markdown class="mb-6 markdown-content onload-animation" articleLanguage={entry.slug === EASYVBOX_SLUG ? activeLanguage : undefined}>
                 <Content />
             </Markdown>
 
-            {licenseConfig.enable && <License title={entry.data.title} slug={entry.slug} pubDate={entry.data.published} class="mb-6 rounded-xl license-container onload-animation"></License>}
+            {licenseConfig.enable && <License title={entry.data.title} slug={pageSlug} pubDate={entry.data.published} class="mb-6 rounded-xl license-container onload-animation"></License>}
 
         </div>
     </div>

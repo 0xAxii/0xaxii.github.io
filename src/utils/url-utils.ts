@@ -12,8 +12,12 @@ function joinUrl(...parts: string[]): string {
 	return joined.replace(/\/+/g, "/");
 }
 
+const postSlugAliases: Record<string, string> = {
+	"actf-easyvbox-writeup": "actf-easyvbox-writeup/kr",
+};
+
 export function getPostUrlBySlug(slug: string): string {
-	return url(`/posts/${slug}/`);
+	return url(`/posts/${postSlugAliases[slug] ?? slug}/`);
 }
 
 export function getTagUrl(tag: string): string {

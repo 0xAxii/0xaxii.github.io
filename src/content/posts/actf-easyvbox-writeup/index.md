@@ -8,8 +8,8 @@ draft: false
 ---
 
 <div class="post-language-switch" data-post-language-switch role="group" aria-label="Article language">
-    <button type="button" class="post-language-switch__button is-active" data-post-language-button="ko" aria-pressed="true">KR</button>
-    <button type="button" class="post-language-switch__button" data-post-language-button="en" aria-pressed="false">EN</button>
+    <a class="post-language-switch__button no-styling" data-post-language-link="ko" href="/posts/actf-easyvbox-writeup/kr/">KR</a>
+    <a class="post-language-switch__button no-styling" data-post-language-link="en" href="/posts/actf-easyvbox-writeup/en/">EN</a>
 </div>
 
 :::section{data-post-language-panel="ko"}
@@ -516,7 +516,7 @@ PWN_REMOTE_PRESET=1 PWN_CMD="/usr/bin/gnome-calculator&" ./exploit
 ![](image.png)
 :::
 
-:::section{data-post-language-panel="en" hidden="hidden"}
+:::section{data-post-language-panel="en"}
 ## 1. Overview
 
 EasyVBox is a VM escape challenge that targets VirtualBox's VMSVGA 3D command handling path. The attack starts in the guest, and the goal is to launch `/usr/bin/gnome-calculator` in the L1 host's GUI session.
