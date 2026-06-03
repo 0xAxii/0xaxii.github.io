@@ -1,5 +1,5 @@
 ---
-title: "[ACTF] EasyVBox Writeup"
+title: "ACTF EasyVBox Writeup"
 published: 2026-06-03
 description: "VirtualBox 7.2.4 VMSVGA 3D acceleration 경로를 이용한 EasyVBox VM escape 풀이를 정리했다"
 category: "CTF/Wargame"
