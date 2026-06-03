@@ -80,7 +80,7 @@
 
     .post-language-switch__button.is-active {
         background: var(--primary);
-        color: var(--btn-content);
+        color: var(--deep-text);
     }
 
     [data-post-language-panel][hidden] {
