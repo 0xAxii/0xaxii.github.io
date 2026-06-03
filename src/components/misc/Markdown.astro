@@ -40,4 +40,80 @@ document.addEventListener("click", function (e: MouseEvent) {
         target.setAttribute("data-timeout-id", newTimeoutId.toString());
     }
 });
+
+type ArticleLanguage = "ko" | "en";
+
+function syncPostLanguageToc(root: Element, language: ArticleLanguage) {
+    const panelHeadings = Array.from(
+        root.querySelectorAll<HTMLElement>("[data-post-language-panel] :is(h1, h2, h3, h4, h5, h6)[id]"),
+    );
+    if (!panelHeadings.length) return;
+
+    const allPanelHeadingIds = new Set(panelHeadings.map((heading) => heading.id));
+    const activeHeadingIds = new Set(
+        panelHeadings
+            .filter((heading) => heading.closest(`[data-post-language-panel="${language}"]`))
+            .map((heading) => heading.id),
+    );
+
+    document.querySelectorAll<HTMLAnchorElement>("#toc a[href^='#']").forEach((anchor) => {
+        const id = decodeURIComponent(anchor.hash.slice(1));
+        if (!allPanelHeadingIds.has(id)) return;
+
+        const shouldShow = activeHeadingIds.has(id);
+        anchor.hidden = !shouldShow;
+        anchor.setAttribute("aria-hidden", shouldShow ? "false" : "true");
+    });
+}
+
+function setPostLanguage(root: Element, language: ArticleLanguage) {
+    root.querySelectorAll<HTMLElement>("[data-post-language-panel]").forEach((panel) => {
+        const isActive = panel.dataset.postLanguagePanel === language;
+        panel.hidden = !isActive;
+        panel.setAttribute("aria-hidden", isActive ? "false" : "true");
+    });
+
+    root.querySelectorAll<HTMLButtonElement>("[data-post-language-button]").forEach((button) => {
+        const isActive = button.dataset.postLanguageButton === language;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+
+    syncPostLanguageToc(root, language);
+}
+
+function initPostLanguageSwitches() {
+    document.querySelectorAll<HTMLElement>("[data-post-language-switch]").forEach((switcher) => {
+        const root = switcher.closest(".custom-md");
+        if (!root) return;
+
+        const activeButton = switcher.querySelector<HTMLButtonElement>("[data-post-language-button].is-active");
+        const language = activeButton?.dataset.postLanguageButton === "en" ? "en" : "ko";
+        setPostLanguage(root, language);
+    });
+}
+
+document.addEventListener("click", function (e: MouseEvent) {
+    const target = e.target as Element | null;
+    const button = target?.closest<HTMLButtonElement>("[data-post-language-button]");
+    if (!button) return;
+
+    const language = button.dataset.postLanguageButton === "en" ? "en" : "ko";
+    const root = button.closest(".custom-md");
+    if (!root) return;
+
+    setPostLanguage(root, language);
+});
+
+document.addEventListener("DOMContentLoaded", initPostLanguageSwitches);
+
+const setupPostLanguageSwitches = () => {
+    window.swup?.hooks.on("page:view", initPostLanguageSwitches);
+};
+
+if (window.swup?.hooks) {
+    setupPostLanguageSwitches();
+} else {
+    document.addEventListener("swup:enable", setupPostLanguageSwitches);
+}
 </script>

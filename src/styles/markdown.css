@@ -39,6 +39,54 @@
         }
     }
 
+    .post-language-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin: 0 0 1.5rem;
+        padding: 0.25rem;
+        border: 1px solid var(--line-divider);
+        border-radius: 0.5rem;
+        background: var(--btn-regular-bg);
+    }
+
+    .post-language-switch__button {
+        appearance: none;
+        min-width: 3rem;
+        height: 2rem;
+        padding: 0 0.875rem;
+        border: 0;
+        border-radius: 0.375rem;
+        background: transparent;
+        color: var(--tw-prose-body);
+        font-size: 0.875rem;
+        font-weight: 700;
+        line-height: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition:
+            color 0.15s ease,
+            background-color 0.15s ease,
+            transform 0.15s ease;
+    }
+
+    .post-language-switch__button:hover {
+        background: var(--btn-regular-bg-hover);
+    }
+
+    .post-language-switch__button:active {
+        transform: scale(0.96);
+    }
+
+    .post-language-switch__button.is-active {
+        background: var(--primary);
+        color: var(--btn-content);
+    }
+
+    [data-post-language-panel][hidden] {
+        display: none !important;
+    }
+
     code {
         @apply bg-[var(--inline-code-bg)] text-[var(--inline-code-color)] px-1 py-0.5 rounded-md overflow-hidden;
 
