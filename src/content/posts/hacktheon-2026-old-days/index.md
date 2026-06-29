@@ -10,35 +10,19 @@ listed: false
 
 # Old Days
 
-note manager로 구현된 heap 문제다.
-`delete` 이후 note pointer와 size를 초기화하지 않아서 UAF가 발생한다.
+### Summary
 
-풀이 흐름은 이렇다.
+note manager가 `delete` 이후 pointer와 size를 지우지 않아서 UAF가 난다. UAF read로 libc와 heap을 잡고 largebin attack으로 `_IO_list_all`과 `stdin->_markers`를 차례로 오염시켜 exit flush에서 fake FILE chain을 태웠다.
 
-1. freed large chunk를 `read`해서 `main_arena` 주소를 leak한다.
-2. largebin chunk의 self pointer로 heap 주소를 구한다.
-3. stdin pipe를 nonblocking으로 바꿔 slot에 잡히지 않는 live chunk를 만든다.
-4. largebin attack으로 `_IO_list_all`을 fake FILE로 돌린다.
-5. House of Apple 2 흐름에 맞춰 fake FILE chain을 구성한다.
-6. `stdin->_markers`를 오염시켜 내부 SIGSEGV를 발생시킨다.
-7. SIGSEGV handler가 `exit(1)`을 호출하고, exit flush에서 fake FILE이 실행된다.
+### Analysis
 
-먼저 UAF read로 leak을 잡았다.
-unsorted bin fd에서 libc base를 계산하고, largebin에 들어간 chunk의 `fd_nextsize` self pointer로 heap base를 구했다.
+freed large chunk를 다시 읽으면 unsorted bin fd에서 `main_arena`가 새고 largebin chunk의 `fd_nextsize` self pointer로 heap base도 계산할 수 있다. leak이 잡힌 뒤에는 stdin pipe를 nonblocking으로 바꿔 slot에 잡히지 않는 live chunk를 만들었다.
 
-그다음은 안정적인 trigger였다.
-원격에서는 바이너리가 setuid-root로 실행되고, 외부에서 signal을 보내는 방식은 사용할 수 없었다.
-그래서 문제 내부의 SIGSEGV handler를 이용했다.
-handler는 특정 상태에서 `exit(1)`을 호출하므로, 프로세스 내부에서 SIGSEGV를 만들면 exit flush까지 도달할 수 있다.
+원격에서는 setuid-root 바이너리라 외부 signal을 보내는 식의 trigger를 쓸 수 없었다. 대신 프로그램 안의 SIGSEGV handler를 이용했다. handler는 특정 상태에서 `exit(1)`을 호출하므로, 내부에서 SIGSEGV를 만들면 `exit` flush까지 자연스럽게 이어진다.
 
-FSOP는 `_IO_list_all`에 fake FILE을 연결하고, wide data/vtable을 House of Apple 2 흐름에 맞췄다.
-`system("cat flag")`가 호출되도록 구성했다.
+FSOP 쪽은 `_IO_list_all`에 fake FILE을 연결하고 wide data/vtable을 House of Apple 2 흐름에 맞췄다. 마지막으로 largebin attack으로 `stdin->_markers`를 잘못된 chunk로 돌려두면 다음 입력 처리 중 marker를 따라가다 SIGSEGV가 터진다.
 
-마지막에 건드린 곳은 `stdin->_markers`였다.
-largebin attack으로 marker list를 잘못된 chunk로 돌려두면, 다음 입력 처리에서 stdin marker를 따라가다가 SIGSEGV가 발생한다.
-이 SIGSEGV가 handler를 거쳐 `exit(1)`로 이어지고, exit flush에서 fake FILE chain이 실행된다.
-
-전체 흐름은 이렇다.
+흐름은 아래처럼 이어진다.
 
 ```text
 UAF read
@@ -51,7 +35,7 @@ UAF read
   -> system("cat flag")
 ```
 
-익스플로잇 코드
+### Exploit
 
 ```python
 #!/usr/bin/env python3
@@ -341,4 +325,6 @@ if __name__ == '__main__':
     main()
 ```
 
-플래그: `hacktheon2026{o1d-d4y5_g1ibc_exp10it4ti0n}`
+### Flag
+
+`hacktheon2026{o1d-d4y5_g1ibc_exp10it4ti0n}`

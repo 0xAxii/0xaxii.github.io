@@ -10,37 +10,34 @@ listed: false
 
 # CathedralOfTheLastCandle
 
-5x8 격자의 각 칸은 `.` / `*` / `~` 세 상태를 가진다.
-각 상태를 0, 1, 2로 두고 mod 3 위에서 계산했다.
+### Summary
 
-문제에서 쓰는 연산은 이렇다.
+5x8 격자의 각 칸은 `.`, `*`, `~` 세 상태를 가진다. 상태를 mod 3 값으로 두고 `ring`을 두 번 눌렀을 때 바뀌는 칸을 관찰해 bonded neighbor 관계를 복구했다. 이후 tree DP로 모든 칸을 0으로 만들고 root에서 `pray`를 실행했다.
+
+### Analysis
+
+상태는 0, 1, 2로 두고 mod 3 위에서 계산했다. 문제에서 쓰는 연산은 아래와 같다.
 
 ```text
 ring -> [a+b, a+2b]
 hush -> [2a+2b, 2a+b] (mod 3)
 ```
 
-`ring`을 두 번 적용하면 현재 칸과 bonded neighbor가 둘 다 부호 반전된다.
-그래서 각 칸에서 `ring`을 두 번 누른 전후 화면 차이를 보면, 현재 칸이 어느 칸과 연결되어 있는지 확인된다.
+`ring`을 두 번 적용하면 현재 칸과 bonded neighbor가 둘 다 부호 반전된다. 각 칸에서 `ring`을 두 번 누른 전후 화면 차이를 보면 현재 칸이 어느 칸과 연결되어 있는지 확인된다.
 
-먼저 snake path로 모든 칸을 방문하면서 상태를 기록했다.
-각 칸에서 `ring`을 두 번 실행하고, 바뀐 칸 중 현재 칸이 아닌 칸을 parent로 잡았다.
-이렇게 전체 bonded neighbor 관계를 복구하면 rooted tree가 된다.
+먼저 snake path로 모든 칸을 방문하며 상태를 기록했다. 각 칸에서 `ring`을 두 번 실행하고 바뀐 칸 중 현재 칸이 아닌 칸을 parent로 잡았다. 이렇게 전체 bonded neighbor 관계를 복구하면 rooted tree가 된다.
 
-그다음에는 트리 위에서 모든 값을 0으로 만드는 DP를 짰다.
-각 node에서는 “subtree를 모두 0으로 만들었을 때 parent 값이 어떻게 바뀌는지”를 저장했다.
+그다음에는 tree 위에서 모든 값을 0으로 만드는 DP를 짰다. 각 node에서는 subtree를 모두 0으로 만들었을 때 parent 값이 어떻게 바뀌는지를 저장했다.
 
 ```text
 rel[v][parent_before] = parent_after 후보들
 ```
 
-상태는 처리한 child 집합, 현재 칸 값, parent 값으로 두고 Dijkstra를 돌렸다.
-이미 0으로 만든 child에서 `ring`을 두 번 실행하면 child는 0으로 유지되고 현재 칸만 `x -> 2x`로 바뀌는데, 이 전이를 넣어야 안정적으로 풀렸다.
+상태는 처리한 child 집합, 현재 칸 값, parent 값으로 두고 Dijkstra를 돌렸다. 이미 0으로 만든 child에서 `ring`을 두 번 실행하면 child는 0으로 유지되고 현재 칸만 `x -> 2x`로 바뀐다. 이 전이를 넣어야 안정적으로 풀린다.
 
-마지막 root `(4,7)`은 제단과 연결되어 있어 `ring`/`hush`로 root 값만 조정할 수 있다.
-모든 칸을 0으로 만든 뒤 root에서 `pray`를 실행하면 플래그가 나온다.
+마지막 root `(4,7)`은 제단과 연결되어 있어 `ring`/`hush`로 root 값만 조정할 수 있다. 모든 칸을 0으로 만든 뒤 root에서 `pray`를 실행하면 flag가 나온다.
 
-익스플로잇 코드
+### Solver
 
 ```python
 #!/usr/bin/env python3
@@ -384,4 +381,6 @@ if __name__ == "__main__":
     run()
 ```
 
-플래그: `hacktheon2026{db423210b697d95bdb3ae4c2751302283d7dafc25beb10e8ab9fb8863986339e3dd35fbe52ab0ddffdcfb952596394547002d319ffe6725299b9a51455f48fe2ccb0308b7699fe43}`
+### Flag
+
+`hacktheon2026{db423210b697d95bdb3ae4c2751302283d7dafc25beb10e8ab9fb8863986339e3dd35fbe52ab0ddffdcfb952596394547002d319ffe6725299b9a51455f48fe2ccb0308b7699fe43}`

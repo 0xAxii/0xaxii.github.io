@@ -10,40 +10,26 @@ listed: false
 
 # even_made
 
-입력 shellcode의 모든 byte가 짝수여야 했다.
-또한 seccomp가 `nanosleep`만 허용하므로, syscall로 플래그를 출력할 수 없었다.
+### Summary
 
-플래그는 프로그램 시작 시 전역 변수 `flag_mem`에 올라간다.
-출력 경로가 막혀 있었다.
-shellcode가 플래그 bit를 읽고 crash 종류로 bit 값을 알려주는 oracle을 만들었다.
+입력 shellcode는 모든 byte가 짝수여야 하고 seccomp는 `nanosleep`만 허용한다. 직접 출력은 막혀 있으니 `flag_mem`의 bit를 읽고 crash 종류로 값을 알려주는 oracle을 만들었다.
 
-구분은 이렇게 잡았다.
+### Analysis
+
+프로그램 시작 시 flag는 전역 변수 `flag_mem`에 올라간다. syscall로 읽어 출력할 수는 없지만 shellcode가 flag bit를 검사한 뒤 서로 다른 signal로 죽으면 원격에서 bit 값을 구분할 수 있다.
+
+구분은 단순하게 잡았다.
 
 ```text
 bit == 1 -> SIGTRAP
 bit == 0 -> SIGSEGV
 ```
 
-PIE base는 shellcode 호출 직후 stack에 남아 있는 return address에서 구했다.
-even-byte instruction만 써야 해서 사용할 수 있는 instruction은 제한적이었다.
-`pop rax`로 return address를 가져온 뒤 짝수 byte instruction 조합으로 `flag_mem`까지 offset을 더했다.
+PIE base는 shellcode 호출 직후 stack에 남은 return address에서 구했다. `pop rax`로 주소를 가져오고 짝수 byte instruction 조합만 써서 `flag_mem`까지 offset을 더한다. 이후 대상 byte를 읽어 원하는 bit만 검사한다.
 
-bit leak shellcode는 이런 모양이다.
+remote에서는 같은 bit를 여러 번 물어 majority vote로 결정했다. 이 과정을 `0x50`바이트 정도 반복하면 null byte 전까지 flag가 복구된다.
 
-```python
-code  = b"\x58"
-code += add_even_delta
-code += b"\x8a\x00"
-code += test_bit
-code += b"\x74\x02"
-code += b"\xcc"
-code += b"\xf4"
-```
-
-remote에서는 같은 bit를 여러 번 보내 crash 결과를 majority vote로 정했다.
-이 과정을 `0x50` 바이트 정도 반복하면 null byte 전까지 플래그가 복구된다.
-
-익스플로잇 코드
+### Exploit
 
 ```python
 from pwn import *
@@ -161,4 +147,6 @@ for i in range(0x50):
 print(flag.decode())
 ```
 
-플래그: `hacktheon2026{Ev3n_R3str1ct3d_Sh3lLc0d3_M4sT3r}`
+### Flag
+
+`hacktheon2026{Ev3n_R3str1ct3d_Sh3lLc0d3_M4sT3r}`

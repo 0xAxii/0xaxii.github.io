@@ -10,42 +10,34 @@ listed: false
 
 # Dark Harbor 2
 
-Dark Harbor 2는 Phase 1에서 얻은 `deployment_hmac_secret`으로 시작했다.
-`/api/phase1-handoff`에 secret을 보내면 REVIEW 상태의 `workspace_id`와 deploy API용 `admin_jwt`가 나온다.
+### Summary
 
-플래그는 policy-engine의 `/internal/admin/policy-override`에서 암호화된다.
-이 route는 internal 전용이고, JWT와 `X-Internal-HMAC`를 모두 확인한다.
-인증값은 Phase 1에서 얻은 `HMAC_SECRET`으로 만들 수 있었다.
-남은 문제는 internal route 접근이었다.
+Phase 1에서 얻은 `deployment_hmac_secret`으로 handoff를 받고 internal route 우회로 policy override를 실행한다. 이후 one-time deploy token의 `GET`/`DEL` race를 이용해 `session_seal`과 `signing_key`를 둘 다 얻어 AES-GCM flag를 복호화했다.
 
-우회는 `#` 처리 차이에서 나왔다.
+### Analysis
+
+`/api/phase1-handoff`에 secret을 보내면 REVIEW 상태의 `workspace_id`와 deploy API용 `admin_jwt`가 나온다. flag는 policy-engine의 `/internal/admin/policy-override`에서 암호화되는데 이 route는 internal 전용이고 JWT와 `X-Internal-HMAC`를 함께 검사한다. 인증값은 Phase 1의 `HMAC_SECRET`으로 만들 수 있었다.
+
+남은 건 internal route 접근이다. 우회는 `#` 처리 차이에서 나왔다.
 
 ```text
 /internal/admin/policy-override#/../../../health/policy-engine
 ```
 
-edge proxy는 `#`를 path 문자처럼 보고 path traversal 정규화를 한다.
-결과적으로 `/health/policy-engine`으로 라우팅된다.
-반면 FastAPI/Uvicorn은 `#` 뒤를 fragment처럼 보고 `request.url.path`에서 제외한다.
-그래서 실제 handler는 `/internal/admin/policy-override`가 된다.
+edge proxy는 `#`를 path 문자처럼 보고 path traversal 정규화를 한다. 결과적으로 `/health/policy-engine`으로 라우팅된다. 반면 FastAPI/Uvicorn은 `#` 뒤를 fragment처럼 다뤄 `request.url.path`에서 제외한다. handler는 `/internal/admin/policy-override`로 잡힌다.
 
-일반 URL에 `#`를 넣으면 클라이언트가 fragment를 서버로 보내지 않는다.
-raw HTTP나 `curl --request-target`이 필요했다.
+일반 URL에 `#`를 넣으면 클라이언트가 fragment를 서버로 보내지 않는다. raw HTTP나 `curl --request-target`이 필요하다.
 
-override가 성공하면 `deploy_token`과 `encrypted_secret`이 나온다.
-플래그는 아직 AES-GCM으로 암호화되어 있었다.
-`session_seal`과 `signing_key`가 필요했다.
+override가 성공하면 `deploy_token`과 `encrypted_secret`이 나온다. flag는 아직 AES-GCM으로 암호화되어 있으므로 `session_seal`과 `signing_key`가 필요했다.
 
-deploy token 사용 로직은 Redis에서 token을 `GET`한 뒤 `DEL`한다.
-두 동작은 원자적이지 않았다.
-같은 token에 `seal`과 `sign` 요청을 동시에 보내면 둘 다 `GET`에 성공했다.
+deploy token 사용 로직은 Redis에서 token을 `GET`한 뒤 `DEL`한다. 두 동작이 원자적이지 않아 같은 token에 `seal`과 `sign` 요청을 동시에 보내면 둘 다 `GET`에 성공한다.
 
 ```text
 seal -> session_seal
 sign -> signing_key
 ```
 
-복호화 key는 이렇게 만들었다.
+복호화 key는 아래처럼 만든다.
 
 ```python
 key = HMAC_SHA256(signing_key, session_seal)[:32]
@@ -53,7 +45,7 @@ nonce = encrypted_secret[:12]
 flag = AESGCM(key).decrypt(nonce, encrypted_secret[12:], None)
 ```
 
-익스플로잇 코드
+### Exploit
 
 ```python
 import base64
@@ -301,4 +293,6 @@ flag = decrypt_flag(
 print("[+] flag:", flag)
 ```
 
-플래그: `hacktheon2026{lighth0use_se4l_cr4ck}`
+### Flag
+
+`hacktheon2026{lighth0use_se4l_cr4ck}`

@@ -10,45 +10,39 @@ listed: false
 
 # Dark Harbor 1
 
-목표는 api-server가 생성하는 internal admin console이었다.
-여기에는 플래그와 Phase 2에서 쓰는 `deployment_hmac_secret`이 들어 있었다.
+### Summary
 
-첫 단계는 `/build/fetch-artifact`의 redirect SSRF였다.
-처음 URL만 검사하고 redirect 이후 목적지는 다시 보지 않았다.
-공개 redirector를 거쳐 `api-server:6000/config`를 읽으면 내부 routing 정보와 `HMAC_SECRET`이 나온다.
+목표는 api-server가 만드는 internal admin console이다. redirect SSRF로 내부 config와 `HMAC_SECRET`을 읽고 local JWT와 policy seed를 이어서 만든 뒤 `fast-jwt`의 key 해석 차이를 이용해 admin policy token을 발급했다.
 
-이 secret으로 api-server local JWT key를 만들었다.
+### Analysis
+
+첫 단계는 `/build/fetch-artifact`의 redirect SSRF였다. 서버는 처음 URL만 검사하고 redirect 이후 목적지는 다시 확인하지 않았다. 공개 redirector를 거쳐 `api-server:6000/config`를 읽으면 내부 routing 정보와 `HMAC_SECRET`이 나온다.
+
+이 secret으로 api-server local JWT key를 만든다.
 
 ```text
 LOCAL_JWT_KEY = HMAC-SHA256(HMAC_SECRET, "darkharbor-local-jwt").hexdigest()
 ```
 
-이 key로 `role=pipeline_admin`, `iss=darkharbor-local` 토큰을 만들면 pipeline admin API를 사용할 수 있다.
+이 key로 `role=pipeline_admin`, `iss=darkharbor-local` 토큰을 만들면 pipeline admin API를 쓸 수 있다.
 
-그다음은 policy seed다.
-public key PEM을 JUnit report의 첫 번째 failure output에 넣어 업로드하면, policy engine이 그 PEM을 JWKS entry로 가져간다.
-
-`/internal/policy-seed`는 edge proxy에서 막히지만, absolute-form request target과 percent-encoding을 섞으면 우회할 수 있다.
+다음은 policy seed다. public key PEM을 JUnit report의 첫 번째 failure output에 넣어 업로드하면 policy engine이 그 PEM을 JWKS entry로 가져간다. `/internal/policy-seed`는 edge proxy에서 막히지만 absolute-form request target과 percent-encoding을 섞으면 우회된다.
 
 ```text
 request target = http://api-server/%69nternal/policy-seed
 ```
 
-edge proxy는 이를 `/internal`로 보지 못하고, Fastify는 decode 후 `/internal/policy-seed` route로 처리한다.
+edge proxy는 이를 `/internal`로 보지 못하고 Fastify는 decode 후 `/internal/policy-seed` route로 처리한다.
 
-마지막은 `fast-jwt` 검증 차이다.
-policy engine은 seed된 PEM 앞에 audit banner로 개행을 붙인다.
+마지막은 `fast-jwt`의 검증 차이다. policy engine은 seed된 PEM 앞에 audit banner로 개행을 붙인다.
 
 ```text
 key = "\n" + public_key_pem
 ```
 
-이 값은 RSA public key로 인식되지 않고 HS256 secret처럼 쓰였다.
-그래서 같은 값을 HMAC key로 사용해 `role=admin` policy token을 만들었다.
+이 값은 RSA public key로 인식되지 않고 HS256 secret처럼 쓰였다. 같은 값을 HMAC key로 삼아 `role=admin` policy token을 만들고 request-target 우회로 `/internal/admin-console.json`을 읽었다.
 
-이 token으로 같은 request-target 우회를 써서 `/internal/admin-console.json`을 읽었다.
-
-익스플로잇 코드
+### Exploit
 
 ```python
 import base64
@@ -127,4 +121,6 @@ print(
 )
 ```
 
-플래그: `hacktheon2026{sil3nt_tid3_bre4ch}`
+### Flag
+
+`hacktheon2026{sil3nt_tid3_bre4ch}`

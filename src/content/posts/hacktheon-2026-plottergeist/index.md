@@ -10,25 +10,26 @@ listed: false
 
 # plottergeist
 
-파일은 `plottergeist.pcap`과 `bench_mic.wav` 두 개가 주어졌다.
-pcap에는 plotter motion 정보가 있고, wav에는 같은 세션의 소리가 들어 있었다.
-traffic만 보면 어떤 이동이 pen down인지 알 수 없었다.
+### Summary
 
-패킷 안에는 format 힌트가 있었다.
+`plottergeist.pcap`에는 plotter motion이 있고 `bench_mic.wav`에는 같은 세션의 소리가 있었다. CoreXY 이동량으로 좌표를 복원한 뒤, wav의 motion 구간 에너지와 첫 이동의 의미를 같이 봐서 `DT=4`를 pen down으로 확정했다.
+
+### Analysis
+
+패킷 안에는 format 힌트가 들어 있다.
 
 ```text
 FMT:OP|SQ|DT|AM|BM
 ```
 
-CoreXY 구조라 모터 이동량은 좌표로 바꿀 수 있다.
+CoreXY 구조라 모터 이동량은 좌표로 바뀐다.
 
 ```text
 dX = (AM + BM) / 2
 dY = (AM - BM) / 2
 ```
 
-좌표 범위는 `X: 16 ~ 368`, `Y: 4 ~ 10`이다.
-폭은 353, 높이는 7이다.
+좌표 범위는 `X: 16 ~ 368`, `Y: 4 ~ 10`이었다. 폭은 353, 높이는 7이다.
 
 ```text
 353 = 59 * 6 - 1
@@ -36,20 +37,13 @@ dY = (AM - BM) / 2
 
 5x7 글자에 1픽셀 공백을 붙인 텍스트라고 보면 정확히 맞는다.
 
-남은 건 `DT=4`와 `DT=5` 중 어느 쪽이 pen down인지 구분하는 일이었다.
-wav에서 motion 구간별 고주파 에너지를 비교하면 두 타입의 소리가 갈린다.
-처음에는 더 시끄러운 쪽이 pen down처럼 보였다.
-첫 motion이 시작 위치로 이동하는 동작이라는 점을 보면 정리된다.
-첫 motion은 `DT=5`이고, 시작 이동에서는 잉크를 찍으면 안 된다.
-그래서 `DT=5`가 pen up, `DT=4`가 pen down이다.
+남은 문제는 `DT=4`와 `DT=5` 중 어느 쪽이 pen down인지 구분하는 것이었다. wav에서 motion 구간별 고주파 에너지를 비교하면 두 타입의 소리가 갈린다. 처음에는 더 시끄러운 쪽이 pen down처럼 보였지만 첫 motion이 시작 위치로 이동하는 동작이라는 점을 같이 봐야 한다. 첫 motion은 `DT=5`이고 시작 이동에서는 잉크를 찍으면 안 된다. 따라서 `DT=5`가 pen up, `DT=4`가 pen down이다.
 
-렌더링할 때는 `AM=BM=0`인 `DT=4` packet도 버리면 안 된다.
-이동량은 없지만 현재 위치에 점 하나를 찍는 명령이다.
-이를 포함해 `DT=4`만 그리면 텍스트가 나온다.
+렌더링할 때는 `AM=BM=0`인 `DT=4` packet도 버리면 안 된다. 이동량은 없지만 현재 위치에 점 하나를 찍는 명령이다. 이를 포함해 `DT=4`만 그리면 텍스트가 나온다.
 
 ![reconstructed](../hacktheon-2026-writeup/dt4_reconstructed_points.png)
 
-익스플로잇 코드
+### Solver
 
 ```python
 import itertools
@@ -368,4 +362,6 @@ for L in [7, 8]:
         print(round(sc, 3), inner, lr)
 ```
 
-플래그: `hacktheon2026{the_plotter_reveals_its_secret_through_sound}`
+### Flag
+
+`hacktheon2026{the_plotter_reveals_its_secret_through_sound}`
