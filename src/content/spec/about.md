@@ -11,9 +11,9 @@ Interested in Offensive Security, AI, Development
 
 ## CTF
 
-### 팀전
+### Team
 
-| 대회 | 결과 | 팀 |
+| Competition | Result | Team |
 |---|---|---|
 | 대구·경북 사이버공격 방어대회 2026 본선전 (일반 부문) | 6위 / 20팀 | 우승하고동인동찜갈비먹으러감 |
 | SCTF 2026 | 1위 / 200팀 | 따따 |
@@ -31,9 +31,9 @@ Interested in Offensive Security, AI, Development
 | 제5회 HCTF | 14위 / 82팀 | SSG |
 | 2026 INC0GNITO FESTIVAL CTF QUALS For Student | 14위 / 108팀 | 두상 쫀나 크다 |
 
-### 개인전
+### Individual
 
-| 대회 | 결과 |
+| Competition | Result |
 |---|---|
 | Dreamhack CTF Season 8 Round #5 (All-Round) | 1위 / 315명 |
 | Dreamhack CTF Season 8 Round #4 (Crypto) | 19위 / 307명 |
