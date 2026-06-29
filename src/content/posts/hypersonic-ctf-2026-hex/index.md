@@ -8,8 +8,6 @@ draft: false
 listed: false
 ---
 
-***SSG Writeup***
-
 # hex
 
 ## 개요

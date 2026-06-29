@@ -8,8 +8,6 @@ draft: false
 listed: false
 ---
 
-***SSG Writeup***
-
 # CCTV (2)
 
 ## 개요

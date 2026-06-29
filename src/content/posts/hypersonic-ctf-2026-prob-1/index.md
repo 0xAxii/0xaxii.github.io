@@ -8,8 +8,6 @@ draft: false
 listed: false
 ---
 
-***SSG Writeup***
-
 # prob 1
 
 ## 개요
