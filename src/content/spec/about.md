@@ -6,8 +6,8 @@ Interested in Offensive Security, AI, Development
 
 - Sejong University, Department of Cyber Defense (2025~)
 - SSG (2025~)
-- Hspace KnightsFrontier 2rd
-- WhiteHatSchool 4th
+- Hspace Knights Frontier 2nd
+- WhiteHat School 4th
 
 ## CTF
 
