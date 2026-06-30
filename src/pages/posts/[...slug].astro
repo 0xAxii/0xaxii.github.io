@@ -14,8 +14,43 @@ import PostMetadata from "../../components/PostMeta.astro";
 import { profileConfig, siteConfig } from "../../config";
 import { formatDateToYYYYMMDD } from "../../utils/date-utils";
 
+const LANGUAGE_SWITCH_POST_SLUGS = [
+	"actf-easyvbox-writeup",
+	"sctf-the-last-honest-witness",
+	"sctf-chronostasis",
+	"sctf-parcelbridge-vault",
+	"sctf-slang",
+	"sctf-kmage",
+	"sctf-zombie-progression",
+	"sctf-babel-furnace",
+	"sctf-cipher-chain",
+] as const;
+
+const LANGUAGE_SWITCH_POSTS = new Set<string>(LANGUAGE_SWITCH_POST_SLUGS);
+const ENGLISH_START_HEADING_BY_SLUG: Record<string, string> = {
+	"actf-easyvbox-writeup": "1-overview",
+	"sctf-the-last-honest-witness": "the-last-honest-witness-1",
+	"sctf-chronostasis": "chronostasis-1",
+	"sctf-parcelbridge-vault": "parcelbridge-vault-1",
+	"sctf-slang": "slang-1",
+	"sctf-kmage": "kmage-1",
+	"sctf-zombie-progression": "zombie_progression-1",
+	"sctf-babel-furnace": "babel_furnace-1",
+	"sctf-cipher-chain": "cipher_chain-1",
+};
+
 export async function getStaticPaths() {
-	const easyVBoxSlug = "actf-easyvbox-writeup";
+	const languageSwitchPosts = new Set<string>([
+		"actf-easyvbox-writeup",
+		"sctf-the-last-honest-witness",
+		"sctf-chronostasis",
+		"sctf-parcelbridge-vault",
+		"sctf-slang",
+		"sctf-kmage",
+		"sctf-zombie-progression",
+		"sctf-babel-furnace",
+		"sctf-cipher-chain",
+	]);
 	const blogEntries = await getRoutablePosts();
 	const listedEntries = await getSortedPosts();
 	const listedEntryBySlug = new Map(
@@ -26,20 +61,22 @@ export async function getStaticPaths() {
 		params: { slug: entry.slug },
 		props: {
 			entry: listedEntryBySlug.get(entry.slug) ?? entry,
-			articleLanguage: entry.slug === easyVBoxSlug ? "ko" : undefined,
+			articleLanguage: languageSwitchPosts.has(entry.slug) ? "ko" : undefined,
 		},
 	}));
 
-	const easyVBoxEntry = blogEntries.find((entry) => entry.slug === easyVBoxSlug);
-	if (easyVBoxEntry) {
-		const entry = listedEntryBySlug.get(easyVBoxEntry.slug) ?? easyVBoxEntry;
+	for (const languageSwitchEntry of blogEntries.filter((entry) =>
+		languageSwitchPosts.has(entry.slug),
+	)) {
+		const entry =
+			listedEntryBySlug.get(languageSwitchEntry.slug) ?? languageSwitchEntry;
 		paths.push(
 			{
-				params: { slug: `${easyVBoxSlug}/kr` },
+				params: { slug: `${languageSwitchEntry.slug}/kr` },
 				props: { entry, articleLanguage: "ko" },
 			},
 			{
-				params: { slug: `${easyVBoxSlug}/en` },
+				params: { slug: `${languageSwitchEntry.slug}/en` },
 				props: { entry, articleLanguage: "en" },
 			},
 		);
@@ -48,33 +85,54 @@ export async function getStaticPaths() {
 	return paths;
 }
 
-const EASYVBOX_SLUG = "actf-easyvbox-writeup";
-
 const { entry, articleLanguage = "" } = Astro.props;
 const { Content, headings } = await entry.render();
 
 const { remarkPluginFrontmatter } = await entry.render();
 
-const activeLanguage = entry.slug === EASYVBOX_SLUG ? articleLanguage || "ko" : entry.data.lang;
+const hasLanguageSwitch = LANGUAGE_SWITCH_POSTS.has(entry.slug);
+const activeArticleLanguage = articleLanguage === "en" ? "en" : "ko";
+const activeLanguage = hasLanguageSwitch
+	? activeArticleLanguage
+	: entry.data.lang;
 const pageLang = activeLanguage || entry.data.lang || siteConfig.lang;
 const pageDescription =
-	entry.slug === EASYVBOX_SLUG && activeLanguage === "en"
-		? "A writeup for the EasyVBox VM escape challenge targeting VirtualBox 7.2.4's VMSVGA 3D path."
+	hasLanguageSwitch && activeArticleLanguage === "en"
+		? entry.slug === "actf-easyvbox-writeup"
+			? "A writeup for the EasyVBox VM escape challenge targeting VirtualBox 7.2.4's VMSVGA 3D path."
+			: entry.data.description.replace("문제 풀이.", "writeup.")
 		: entry.data.description;
-const pageSlug =
-	entry.slug === EASYVBOX_SLUG && (activeLanguage === "ko" || activeLanguage === "en")
-		? `${entry.slug}/${activeLanguage === "en" ? "en" : "kr"}`
-		: entry.slug;
+const pageSlug = hasLanguageSwitch
+	? `${entry.slug}/${activeArticleLanguage === "en" ? "en" : "kr"}`
+	: entry.slug;
 
 function getLanguageHeadings() {
-	if (entry.slug !== EASYVBOX_SLUG) return headings;
+	if (!hasLanguageSwitch) return headings;
 
-	const englishStart = headings.findIndex((heading) => heading.slug === "1-overview");
-	if (englishStart < 0) return headings;
+	const problemTitle = entry.data.title
+		.replace(/^SCTF\s+/, "")
+		.replace(/\s+Writeup$/, "");
+	const repeatedTitleHeadingIndexes = headings
+		.map((heading, index) =>
+			heading.depth === 1 && heading.text === problemTitle ? index : -1,
+		)
+		.filter((index) => index >= 0);
+	const englishStart = repeatedTitleHeadingIndexes[1] ?? -1;
+	if (englishStart >= 0) {
+		return activeArticleLanguage === "en"
+			? headings.slice(englishStart)
+			: headings.slice(0, englishStart);
+	}
 
-	return activeLanguage === "en"
-		? headings.slice(englishStart)
-		: headings.slice(0, englishStart);
+	const englishStartHeading = ENGLISH_START_HEADING_BY_SLUG[entry.slug];
+	const fallbackEnglishStart = headings.findIndex(
+		(heading) => heading.slug === englishStartHeading,
+	);
+	if (fallbackEnglishStart < 0) return headings;
+
+	return activeArticleLanguage === "en"
+		? headings.slice(fallbackEnglishStart)
+		: headings.slice(0, fallbackEnglishStart);
 }
 
 const visibleHeadings = getLanguageHeadings();
@@ -153,7 +211,7 @@ const jsonLd = {
             }
 
 
-            <Markdown class="mb-6 markdown-content onload-animation" articleLanguage={entry.slug === EASYVBOX_SLUG ? activeLanguage : undefined}>
+            <Markdown class="mb-6 markdown-content onload-animation" articleLanguage={hasLanguageSwitch ? activeArticleLanguage : undefined}>
                 <Content />
             </Markdown>
 

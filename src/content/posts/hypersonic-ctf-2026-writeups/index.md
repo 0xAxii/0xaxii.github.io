@@ -1,5 +1,5 @@
 ---
-title: "HyperSonic CTF 2026 Writeup"
+title: "HyperSonic CTF Writeup"
 published: 2026-06-08
 description: "HyperSonic CTF 2026에서 푼 문제 풀이를 분야별로 정리했다"
 category: "CTF/Wargame"

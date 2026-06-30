@@ -12,9 +12,21 @@ function joinUrl(...parts: string[]): string {
 	return joined.replace(/\/+/g, "/");
 }
 
-const postSlugAliases: Record<string, string> = {
-	"actf-easyvbox-writeup": "actf-easyvbox-writeup/kr",
-};
+const languageSwitchPostSlugs = [
+	"actf-easyvbox-writeup",
+	"sctf-the-last-honest-witness",
+	"sctf-chronostasis",
+	"sctf-parcelbridge-vault",
+	"sctf-slang",
+	"sctf-kmage",
+	"sctf-zombie-progression",
+	"sctf-babel-furnace",
+	"sctf-cipher-chain",
+] as const;
+
+const postSlugAliases: Record<string, string> = Object.fromEntries(
+	languageSwitchPostSlugs.map((slug) => [slug, `${slug}/kr`]),
+);
 
 export function getPostUrlBySlug(slug: string): string {
 	return url(`/posts/${postSlugAliases[slug] ?? slug}/`);
