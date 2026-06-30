@@ -1,5 +1,5 @@
 ---
-title: "SCTF Axii Writeups"
+title: "SCTF 2026 Writeup"
 published: 2026-06-30
 description: "SCTF에서 푼 문제 풀이를 분야별로 정리했다"
 category: "CTF/Wargame"
@@ -36,4 +36,3 @@ draft: false
 | 문제 |
 |---|
 | [Cipher_Chain](/posts/sctf-cipher-chain/kr/) |
-
