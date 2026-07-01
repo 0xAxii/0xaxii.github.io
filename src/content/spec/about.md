@@ -16,6 +16,7 @@ Interested in Offensive Security, AI, Development
 | Competition | Result | Team |
 |---|---|---|
 | 대구·경북 사이버공격 방어대회 2026 본선전 (일반 부문) | 6위 / 20팀 | 우승하고동인동찜갈비먹으러감 |
+| SekaiCTF 2026 | 7위 / 925팀 | Jinddabi's |
 | SCTF 2026 | 1위 / 200팀 | 따따 |
 | 대구·경북 사이버공격 방어대회 2026 예선전 (일반 부문) | 13위 / 61팀 | 우승하고동인동찜갈비먹으러감 |
 | HyperSonic CTF | 3위 / 79팀 | CTF상금모아서ssg.com도메인사기376일차 |
