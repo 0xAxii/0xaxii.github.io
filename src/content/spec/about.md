@@ -13,6 +13,8 @@ Interested in Offensive Security, AI, Development
 
 ### Team
 
+#### 2026
+
 | Competition | Result | Team |
 |---|---|---|
 | K.knock · D-Alpha · CAUtion 동아리 연합 CTF | 7위 / 83팀 | 뚜뚜컴퍼니 |
@@ -35,6 +37,8 @@ Interested in Offensive Security, AI, Development
 
 ### Individual
 
+#### 2026
+
 | Competition | Result |
 |---|---|
 | Dreamhack CTF Season 8 Round #5 (All-Round) | 1위 / 315명 |
@@ -44,6 +48,19 @@ Interested in Offensive Security, AI, Development
 | SPACE WAR @ ARIES (AI) | 1위 / 176명 |
 
 ## Other Competitions
+
+### On-Campus
+
+#### 2025
+
+| Competition | Result |
+|---|---|
+| 2025 제10회 SW코딩경시대회 | 2위 |
+| 제3회 정보보호 학술제 (논문 분야) | 장려상 |
+
+### External
+
+#### 2026
 
 | Competition | Result | Team |
 |---|---|---|
