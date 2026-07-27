@@ -15,6 +15,7 @@ Interested in Offensive Security, AI, Development
 
 | Competition | Result | Team |
 |---|---|---|
+| K.knock · D-Alpha · CAUtion 동아리 연합 CTF | 7위 / 83팀 | 뚜뚜컴퍼니 |
 | SekaiCTF 2026 | 7위 / 925팀 | Jinddabi's |
 | 대구·경북 사이버공격 방어대회 2026 본선전 (일반 부문) | 6위 / 20팀 | 우승하고동인동찜갈비먹으러감 |
 | SCTF 2026 | 1위 / 200팀 | 따따 |
@@ -41,6 +42,12 @@ Interested in Offensive Security, AI, Development
 | SPACE WAR @ TAURUS (PWN) | 7위 / 111명 |
 | Dreamhack CTF Season 8 Round #3 (Rev) | 6위 / 404명 |
 | SPACE WAR @ ARIES (AI) | 1위 / 176명 |
+
+## Other Competitions
+
+| Competition | Result | Team |
+|---|---|---|
+| HSPACE DIGITAL FORENSICS CHALLENGE | 장려상 | 양윤모여친구함 |
 
 ## Contact
 
