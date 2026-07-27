@@ -49,6 +49,14 @@ Interested in Offensive Security, AI, Development
 
 ## Other Competitions
 
+### External
+
+#### 2026
+
+| Competition | Result | Team |
+|---|---|---|
+| HSPACE DIGITAL FORENSICS CHALLENGE | 장려상 | 양윤모여친구함 |
+
 ### On-Campus
 
 #### 2025
@@ -57,14 +65,6 @@ Interested in Offensive Security, AI, Development
 |---|---|
 | 2025 제10회 SW코딩경시대회 | 2위 |
 | 제3회 정보보호 학술제 (논문 분야) | 장려상 |
-
-### External
-
-#### 2026
-
-| Competition | Result | Team |
-|---|---|---|
-| HSPACE DIGITAL FORENSICS CHALLENGE | 장려상 | 양윤모여친구함 |
 
 ## Contact
 
