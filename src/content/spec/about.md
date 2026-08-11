@@ -17,6 +17,7 @@ Interested in Offensive Security, AI, Development
 
 | Competition | Result | Team |
 |---|---|---|
+| 2026 KISIA 정보보호 경진대회 | 본선 진출 (예선 상위 25팀) | 뚜뚜컴퍼니 |
 | K.knock · D-Alpha · CAUtion 동아리 연합 CTF | 7위 / 83팀 | 뚜뚜컴퍼니 |
 | SekaiCTF 2026 | 7위 / 925팀 | Jinddabi's |
 | 대구·경북 사이버공격 방어대회 2026 본선전 (일반 부문) | 6위 / 20팀 | 우승하고동인동찜갈비먹으러감 |
