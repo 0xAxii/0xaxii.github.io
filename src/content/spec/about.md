@@ -17,9 +17,9 @@ Interested in Offensive Security, AI, Development
 
 | Competition | Result | Team |
 |---|---|---|
+| DiceCTF 2026 Finals | 11위 / 12팀 | 따따 |
 | 2026 제 1회 KISIA CTF 본선 | 17위 / 25팀 | 뚜뚜컴퍼니 |
 | 2026 제 1회 KISIA CTF 예선 | 본선 진출 (예선 상위 25팀) | 뚜뚜컴퍼니 |
-| DiceCTF 2026 Finals | 11위 / 12팀 | 따따 |
 | DEF CON CTF 2026 | 7위 / 12팀 | Jinddabi's |
 | K.knock · D-Alpha · CAUtion 동아리 연합 CTF | 7위 / 83팀 | 뚜뚜컴퍼니 |
 | SekaiCTF 2026 | 7위 / 925팀 | Jinddabi's |
