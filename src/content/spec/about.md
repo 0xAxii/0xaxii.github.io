@@ -17,6 +17,7 @@ Interested in Offensive Security, AI, Development
 
 | Competition | Result | Team |
 |---|---|---|
+| SCAN 2026 Final | 2위 / 20팀 | hello |
 | 주말에 뭐 하세요? 바쁘세요? 해결 가능하신가요? | 3위 / 27팀 | 박시우꺼드럭자제좀 |
 | DiceCTF 2026 Finals | 11위 / 12팀 | 따따 |
 | 2026 제 1회 KISIA CTF 본선 | 17위 / 25팀 | 뚜뚜컴퍼니 |
