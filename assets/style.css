@@ -6,8 +6,8 @@
 
 	--ink: #ffffff;
 	--text: #1d1d1f;
-	--text-2: #6e6e73;
-	--text-3: #86868b;
+	--text-2: #515154;
+	--text-3: #6e6e73;
 	--line: rgba(0, 0, 0, 0.1);
 	--tile: #f5f5f7;
 	--tile-2: #ececf0;
@@ -20,10 +20,10 @@
 	--glass-rim-2: rgba(0, 0, 0, 0.06);
 	--glass-shadow: 0 8px 28px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
 	--edge: rgba(255, 255, 255, 0.9);
-	--gold: #b8860b; --gold-bg: rgba(255, 196, 0, 0.16);
-	--silver: #6b7280; --silver-bg: rgba(107, 114, 128, 0.13);
-	--bronze: #b45f2a; --bronze-bg: rgba(217, 119, 6, 0.13);
-	--code-bg: #f5f5f7;
+	--gold: #8a6100; --gold-bg: rgba(255, 196, 0, 0.16);
+	--silver: #4b5563; --silver-bg: rgba(107, 114, 128, 0.13);
+	--bronze: #9a4a14; --bronze-bg: rgba(217, 119, 6, 0.13);
+	--code-bg: #ffffff;
 	--mark: rgba(255, 214, 10, 0.4);
 	color-scheme: light;
 }
@@ -32,7 +32,7 @@
 	--ink: #000000;
 	--text: #f5f5f7;
 	--text-2: #a1a1a6;
-	--text-3: #6e6e73;
+	--text-3: #8e8e93;
 	--line: rgba(255, 255, 255, 0.1);
 	--tile: #161617;
 	--tile-2: #1d1d1f;
@@ -48,7 +48,7 @@
 	--gold: #ffd25e; --gold-bg: rgba(255, 210, 94, 0.12);
 	--silver: #e3e6ee; --silver-bg: rgba(227, 230, 238, 0.1);
 	--bronze: #f0a46a; --bronze-bg: rgba(240, 164, 106, 0.12);
-	--code-bg: #111113;
+	--code-bg: #0d1117;
 	--mark: rgba(255, 214, 10, 0.28);
 	color-scheme: dark;
 }
@@ -124,11 +124,11 @@ body.scrolled .edge { opacity: 1; }
 }
 body.scrolled .nav { background: color-mix(in srgb, var(--ink) 55%, transparent); }
 .me { display: flex; align-items: center; gap: 9px; padding-right: 12px; font-weight: 600; font-size: 16px; letter-spacing: -0.02em; }
-.me img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1px var(--glass-rim-2); }
+.me img { flex: none; width: 36px; height: 36px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1px var(--glass-rim-2); }
 .seg { position: relative; display: flex; align-items: center; height: 40px; }
 .seg > a, .seg > button {
 	position: relative; z-index: 1;
-	height: 40px; display: grid; place-items: center;
+	height: 40px; display: flex; align-items: center; justify-content: center;
 	padding: 0 15px;
 	border: 0; background: none;
 	font: 500 15px var(--font); letter-spacing: -0.01em;
@@ -162,7 +162,7 @@ body.scrolled .nav { background: color-mix(in srgb, var(--ink) 55%, transparent)
 	background: linear-gradient(180deg, var(--name-from) 35%, var(--name-to) 115%);
 	-webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.tag { margin: 22px 0 0; max-width: 640px; font-size: clamp(21px, 2.2vw, 28px); line-height: 1.3; font-weight: 500; color: var(--text-2); }
+.tag { text-wrap: balance; margin: 22px 0 0; max-width: 640px; font-size: clamp(21px, 2.2vw, 28px); line-height: 1.3; font-weight: 500; color: var(--text-2); }
 .social { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 40px; }
 .soc { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; color: var(--text); }
 .soc .icon { width: 19px; height: 19px; }
@@ -182,7 +182,7 @@ body.scrolled .nav { background: color-mix(in srgb, var(--ink) 55%, transparent)
 
 .sec { padding: 60px 0 40px; text-align: center; }
 .sec:has(.affs) { padding: 44px 0 20px; }
-.sec h2 { margin: 0; font-size: clamp(40px, 5.2vw, 56px); font-weight: 600; letter-spacing: -0.025em; line-height: 1.07; }
+.sec h2 { text-wrap: balance; margin: 0; font-size: clamp(40px, 5.2vw, 56px); font-weight: 600; letter-spacing: -0.025em; line-height: 1.07; }
 .sub { margin: 12px auto 0; max-width: 560px; font-size: 21px; line-height: 1.38; color: var(--text-2); }
 .tile { margin-top: 28px; padding: 10px 36px; border-radius: 28px; background: var(--tile); text-align: left; }
 .ctl { display: inline-flex; margin: 30px auto 0; padding: 4px; border-radius: 999px; }
@@ -227,8 +227,8 @@ body.scrolled .nav { background: color-mix(in srgb, var(--ink) 55%, transparent)
 .card:hover { transform: scale(1.015); background: var(--tile-2); }
 .card.lead { grid-column: span 2; min-height: 290px; background: radial-gradient(120% 140% at 85% 0%, rgba(80, 100, 240, 0.22), transparent 55%), var(--tile); }
 .card .k { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
-.card h3 { margin: 12px 0 0; font-size: 28px; font-weight: 600; letter-spacing: -0.022em; line-height: 1.15; }
-.card.lead h3 { font-size: clamp(32px, 4vw, 44px); max-width: 720px; }
+.card h2 { margin: 12px 0 0; font-size: 28px; font-weight: 600; letter-spacing: -0.022em; line-height: 1.15; }
+.card.lead h2 { font-size: clamp(32px, 4vw, 44px); max-width: 720px; }
 .card p { margin: 12px 0 0; max-width: 620px; font-size: 17px; line-height: 1.45; color: var(--text-2); }
 .card time { margin-top: auto; padding-top: 26px; font-size: 14px; color: var(--text-3); }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--glass-on); color: var(--text-2); font-size: 12px; font-weight: 500; vertical-align: 4px; }

@@ -23,5 +23,5 @@ export default {
 		"논문리뷰": "Paper Review",
 	},
 	// Shiki themes used for code blocks in light / dark mode.
-	codeThemes: { light: "github-light", dark: "github-dark" },
+	codeThemes: { light: "github-light-default", dark: "github-dark-default" },
 };
