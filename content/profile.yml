@@ -1,0 +1,108 @@
+# 메인 페이지(/)에 표시되는 프로필과 이력 데이터.
+# 예선/본선이 모두 있는 대회는 stages로 묶는다(본선을 먼저).
+# 대회 결과는 "N위 / M팀" 형식으로 적으면 순위 배지, 통계, 영어 표기("Nth / M teams")가 자동으로 만들어진다.
+# 한/영 표기가 다른 값은 { ko: "...", en: "..." } 형태로 적는다.
+
+name: Axii
+handle: 0xAxii
+role: { ko: "보안 연구자", en: "Security Researcher" }
+tagline: Offensive Security · AI
+intro:
+  ko: "공격 보안과 AI에 관심이 있습니다."
+  en: "Interested in Offensive Security and AI."
+avatar: /avatar.png
+email: axii@sju.ac.kr
+
+links:
+  - { name: GitHub, icon: github, url: "https://github.com/0xAxii" }
+  - { name: X, icon: x, url: "https://x.com/axii7777" }
+  - { name: LinkedIn, icon: linkedin, url: "https://www.linkedin.com/in/%EB%AF%BC%EA%B7%9C-%EA%B9%80-42b98638a/" }
+  - { name: Discord, icon: discord, url: "https://www.discord.com/users/495238318699839498" }
+  - { name: Dreamhack, icon: dreamhack, url: "https://dreamhack.io/users/77698" }
+
+background:
+  # 메인 페이지에 섹션별로 표시된다. 섹션마다 조직을, 조직마다 역할(roles)을 최신순으로 적는다.
+  # roles가 없으면 이름만 표시된다.
+  - section: { ko: "학력", en: "Education" }
+    items:
+      - name: { ko: "세종대학교", en: "Sejong University" }
+        roles:
+          - { title: { ko: "사이버국방학과 학사 과정", en: "B.E. in Cyber Defense" }, period: "2025.03 –" }
+  - section: { ko: "경력", en: "Experience" }
+    items:
+      - name: "CCSEC Lab"
+        roles:
+          - { title: { ko: "학생 인턴", en: "Student Intern" }, period: "2026.03 –" }
+      - name: "NGNS Lab"
+        roles:
+          - { title: { ko: "학생 인턴", en: "Student Intern" }, period: "2025.07 – 2025.12" }
+  - section: { ko: "활동", en: "Activities" }
+    items:
+      - name: "SSG"
+        roles:
+          - { title: { ko: "운영진", en: "Staff" }, period: "2026.07 –" }
+          - { title: { ko: "회원", en: "Member" }, period: "2025.03 –" }
+      - name: "INC0GNITO"
+        roles:
+          - { title: { ko: "운영진", en: "Staff" }, period: "2026" }
+      - name: "Hspace Knights Frontier"
+        roles:
+          - { title: { ko: "3기 운영진", en: "3rd Staff" }, period: "2026.11 –" }
+          - { title: { ko: "2기", en: "2nd" }, period: "2026.04 – 2026.10" }
+      - name: { ko: "화이트햇스쿨", en: "WhiteHat School" }
+        roles:
+          - { title: { ko: "4기", en: "4th" }, period: "2026.06 –" }
+  - section: { ko: "버그바운티", en: "Bug Bounty" }
+    items:
+      - name: { ko: "카카오 버그바운티", en: "Kakao Bug Bounty" }
+        roles:
+          - { title: { ko: "명예의 전당", en: "Hall of Fame" }, period: "2026" }
+          - { title: "KV-2026-242" }
+  - section: { ko: "CTF 팀", en: "CTF Team" }
+    items:
+      - name: { ko: "따따컴퍼니", en: "dda_com" }
+
+competitions:
+  - title: { ko: "국제 CTF", en: "International CTF" }
+    years:
+      - year: 2026
+        entries:
+          - { date: "2026-09-28", name: "SCAN 2026", team: "hello", stages: [{ stage: { ko: "본선", en: "Finals" }, result: "2위 / 20팀" }, { stage: { ko: "예선", en: "Quals" }, result: "20위 / 416팀" }] }
+          - { date: "2026-09-26", name: "FAUST CTF 2026", result: "5위 / 223팀", team: { ko: "따따", en: "dda_com" } }
+          - { date: "2026-08-30", name: "DiceCTF 2026", team: { ko: "따따", en: "dda_com" }, stages: [{ stage: { ko: "본선", en: "Finals" }, result: "11위 / 12팀" }, { stage: { ko: "예선", en: "Quals" }, result: "5위 / 496팀" }] }
+          - { date: "2026-08-09", name: "DEF CON CTF 2026", team: "Jinddabi's", stages: [{ stage: { ko: "본선", en: "Finals" }, result: "7위 / 12팀" }, { stage: { ko: "예선", en: "Quals" }, result: "6위 / 673팀" }] }
+          - { date: "2026-06-29", name: "SekaiCTF 2026", result: "7위 / 925팀", team: "Jinddabi's" }
+          - { date: "2026-06-15", name: "SCTF 2026", result: "1위 / 200팀", team: { ko: "따따", en: "dda_com" } }
+          - { date: "2026-06-07", name: "SAS CTF 2026 Quals", result: "5위 / 515팀", team: { ko: "따따", en: "dda_com" } }
+          - { date: "2026-05-17", name: "TJCTF 2026", result: "1위 / 947팀", team: "Jinddabi's" }
+          - { date: "2026-05-11", name: "Midnight Sun CTF 2026 Quals", result: "11위 / 542팀", team: { ko: "따따", en: "dda_com" } }
+          - { date: "2026-05-11", name: "Azure Assassin Alliance CTF 2026", result: "1위 / 300팀", team: { ko: "따따", en: "dda_com" } }
+          - { date: "2026-04-12", name: "UMassCTF 2026", result: "8위 / 862팀", team: { ko: "따따", en: "dda_com" } }
+          - { date: "2026-03-29", name: "KalmarCTF 2026", result: "7위 / 324팀", team: "Solo" }
+          - { date: "2026-03-16", name: "SUCTF 2026", result: "2위 / 387팀", team: { ko: "따따", en: "dda_com" } }
+          - { date: "2026-02-22", name: "BITSCTF 2026", result: "1위 / 859팀", team: { ko: "따따", en: "dda_com" } }
+  - title: { ko: "국내 CTF", en: "Domestic CTF" }
+    years:
+      - year: 2026
+        entries:
+          - { name: "주말에 뭐 하세요? 바쁘세요? 해결 가능하신가요?", result: "3위 / 27팀", team: "박시우꺼드럭자제좀" }
+          - { date: "2026-08-18", name: "2026 제 1회 KISIA CTF", team: "뚜뚜컴퍼니", stages: [{ stage: { ko: "본선", en: "Finals" }, result: "17위 / 25팀" }, { stage: { ko: "예선", en: "Quals" }, result: { ko: "본선 진출 (예선 상위 25팀)", en: "Advanced to finals (top 25)" } }] }
+          - { date: "2026-07-26", name: "K.knock · D-Alpha · CAUtion 동아리 연합 CTF", result: "7위 / 83팀", team: "뚜뚜컴퍼니" }
+          - { date: "2026-06-25", name: "대구·경북 사이버공격 방어대회 2026 (일반 부문)", team: "우승하고동인동찜갈비먹으러감", stages: [{ stage: { ko: "본선", en: "Finals" }, result: "6위 / 20팀" }, { stage: { ko: "예선", en: "Quals" }, result: "13위 / 61팀" }] }
+          - { date: "2026-06-07", name: "HyperSonic CTF", result: "3위 / 79팀", team: "CTF상금모아서ssg.com도메인사기376일차" }
+          - { date: "2026-05-30", name: "Dreamhack CTF Season 8 Round #5 (All-Round)", result: "1위 / 315명", team: { ko: "개인전", en: "Individual" } }
+          - { date: "2026-05-02", name: "Dreamhack CTF Season 8 Round #4 (Crypto)", result: "19위 / 307명", team: { ko: "개인전", en: "Individual" } }
+          - { date: "2026-04-26", name: "SPACE WAR @ TAURUS (PWN)", result: "7위 / 111명", team: { ko: "개인전", en: "Individual" } }
+          - { date: "2026-04-18", name: "Dreamhack CTF Season 8 Round #3 (Rev)", result: "6위 / 404명", team: { ko: "개인전", en: "Individual" } }
+          - { date: "2026-03-29", name: "SPACE WAR @ ARIES (AI)", result: "1위 / 176명", team: { ko: "개인전", en: "Individual" } }
+          - { date: "2026-02-08", name: "제5회 HCTF", result: "14위 / 82팀", team: "SSG" }
+          - { date: "2026-02-07", name: "2026 INC0GNITO FESTIVAL CTF QUALS For Student", result: "14위 / 108팀", team: "두상 쫀나 크다" }
+  - title: { ko: "기타 대회", en: "Other Competitions" }
+    years:
+      - year: 2026
+        entries:
+          - { name: "HSPACE DIGITAL FORENSICS CHALLENGE", result: "장려상", team: "양윤모여친구함", scope: { ko: "교외", en: "External" } }
+      - year: 2025
+        entries:
+          - { name: "2025 제10회 SW코딩경시대회", result: "2위", scope: { ko: "교내", en: "On-Campus" } }
+          - { name: "제3회 정보보호 학술제 (논문 분야)", result: "장려상", scope: { ko: "교내", en: "On-Campus" } }
